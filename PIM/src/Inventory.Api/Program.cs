@@ -1,0 +1,565 @@
+using System.Text;
+using Inventory.Api.Auth;
+using Inventory.Api.Data;
+using Inventory.Api.Dtos;
+using Inventory.Api.Entities;
+using Inventory.Api.Enums;
+using Inventory.Api.Extensions;
+using Inventory.Api.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? "Data Source=inventory.db";
+    options.UseSqlite(connectionString);
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontEnd", policy =>
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
+builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IStockService, StockService>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwtOptions = builder.Configuration
+            .GetSection(JwtOptions.SectionName)
+            .Get<JwtOptions>() ?? new JwtOptions();
+
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+
+            ValidIssuer = jwtOptions.Issuer,
+            ValidAudience = jwtOptions.Audience,
+
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtOptions.Key)
+            ),
+
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole(UserRole.Admin.ToString()));
+    options.AddPolicy("ManagerOrAdmin", policy => policy.RequireRole(UserRole.Admin.ToString(), UserRole.Manager.ToString()));
+    options.AddPolicy("MovementOperator", policy => policy.RequireRole(UserRole.Admin.ToString(), UserRole.Employee.ToString()));
+});
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Cole SEU_TOKEN"
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+var app = builder.Build();
+
+await SeedData.InitializeAsync(app.Services, app.Configuration);
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseCors("FrontEnd");
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapGet("/", () => Results.Ok(new
+{
+    message = "API de estoque em execucao",
+    docs = "/swagger"
+})).AllowAnonymous();
+
+var auth = app.MapGroup("/api/auth").AllowAnonymous();
+
+auth.MapPost("/login", async (
+    LoginRequest request,
+    AppDbContext dbContext,
+    IPasswordHasher passwordHasher,
+    IJwtTokenService jwtTokenService,
+    CancellationToken cancellationToken) =>
+{
+    var user = await dbContext.Users.FirstOrDefaultAsync(x => x.Email == request.Email, cancellationToken);
+
+    if (user is null || !passwordHasher.Verify(request.Password, user.PasswordHash))
+    {
+        return Results.Unauthorized();
+    }
+
+    return Results.Ok(jwtTokenService.Generate(user));
+});
+
+var companies = app.MapGroup("/api/companies");
+
+companies.MapPost("/register", async (
+    RegisterCompanyRequest request,
+    AppDbContext dbContext,
+    IPasswordHasher passwordHasher,
+    CancellationToken cancellationToken) =>
+{
+    var emailExists = await dbContext.Companies
+        .AnyAsync(x => x.Email == request.Email, cancellationToken);
+
+    if (emailExists)
+    {
+        return Results.BadRequest(new
+        {
+            message = "Ja existe empresa com este e-mail"
+        });
+    }
+
+    var cnpjExists = await dbContext.Companies
+        .AnyAsync(x => x.Cnpj == request.Cnpj, cancellationToken);
+
+    if (cnpjExists)
+    {
+        return Results.BadRequest(new
+        {
+            message = "Ja existe empresa com este CNPJ"
+        });
+    }
+
+    var company = new Company
+    {
+        Name = request.Name,
+        Cnpj = request.Cnpj,
+        Email = request.Email,
+        PasswordHash = passwordHasher.Hash(request.Password)
+    };
+
+    dbContext.Companies.Add(company);
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    return Results.Created($"/api/companies/{company.Id}",
+        new CompanyResponse(
+            company.Id,
+            company.Name,
+            company.Cnpj,
+            company.Email,
+            company.CreatedAt));
+});
+
+companies.MapPost("/login", async (
+    LoginCompanyRequest request,
+    AppDbContext dbContext,
+    IPasswordHasher passwordHasher,
+    IJwtTokenService jwtTokenService,
+    CancellationToken cancellationToken) =>
+{
+    var company = await dbContext.Companies
+        .FirstOrDefaultAsync(x => x.Email == request.Email, cancellationToken);
+
+    if (company is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var passwordValid = passwordHasher.Verify(
+        request.Password,
+        company.PasswordHash);
+
+    if (!passwordValid)
+    {
+        return Results.Unauthorized();
+    }
+
+    var user = new User
+    {
+        Id = company.Id,
+        Name = company.Name,
+        Email = company.Email,
+        PasswordHash = company.PasswordHash,
+        Role = UserRole.Admin
+    };
+
+    var loginResponse = jwtTokenService.Generate(user);
+
+    return Results.Ok(loginResponse);
+});
+
+var users = app.MapGroup("/api/users").RequireAuthorization();
+
+users.MapPost("/", async (
+    CreateUserRequest request,
+    AppDbContext dbContext,
+    IPasswordHasher passwordHasher,
+    IAuthorizationService authorizationService,
+    HttpContext httpContext,
+    CancellationToken cancellationToken) =>
+{
+    var anyUser = await dbContext.Users.AnyAsync(cancellationToken);
+    if (anyUser)
+    {
+        var authz = await authorizationService.AuthorizeAsync(httpContext.User, "AdminOnly");
+        if (!authz.Succeeded)
+        {
+            return Results.Forbid();
+        }
+    }
+
+    var emailExists = await dbContext.Users.AnyAsync(x => x.Email == request.Email, cancellationToken);
+    if (emailExists)
+    {
+        return Results.BadRequest(new { message = "Ja existe usuario com este e-mail." });
+    }
+
+    var user = new User
+    {
+        Name = request.Name,
+        Email = request.Email,
+        PasswordHash = passwordHasher.Hash(request.Password),
+        Role = request.Role
+    };
+
+    dbContext.Users.Add(user);
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    return Results.Created($"/api/users/{user.Id}", new UserResponse(user.Id, user.Name, user.Email, user.Role));
+}).AllowAnonymous();
+
+users.MapGet("/", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var data = await dbContext.Users
+        .OrderBy(x => x.Name)
+        .Select(x => new UserResponse(x.Id, x.Name, x.Email, x.Role))
+        .ToListAsync(cancellationToken);
+
+    return Results.Ok(data);
+}).RequireAuthorization("AdminOnly");
+
+users.MapPut("/{id:int}", async (
+    int id,
+    UpdateUserRequest request,
+    AppDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var user = await dbContext.Users.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    if (user is null)
+    {
+        return Results.NotFound();
+    }
+
+    var duplicateEmail = await dbContext.Users.AnyAsync(x => x.Email == request.Email && x.Id != id, cancellationToken);
+    if (duplicateEmail)
+    {
+        return Results.BadRequest(new { message = "Ja existe usuario com este e-mail." });
+    }
+
+    user.Name = request.Name;
+    user.Email = request.Email;
+    user.Role = request.Role;
+
+    await dbContext.SaveChangesAsync(cancellationToken);
+    return Results.Ok(new UserResponse(user.Id, user.Name, user.Email, user.Role));
+}).RequireAuthorization("AdminOnly");
+
+var categories = app.MapGroup("/api/categories").RequireAuthorization();
+
+categories.MapPost("/", async (CreateCategoryRequest request, AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var exists = await dbContext.Categories.AnyAsync(x => x.Name == request.Name, cancellationToken);
+    if (exists)
+    {
+        return Results.BadRequest(new { message = "Categoria ja cadastrada." });
+    }
+
+    var category = new Category { Name = request.Name };
+    dbContext.Categories.Add(category);
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    return Results.Created($"/api/categories/{category.Id}", new CategoryResponse(category.Id, category.Name));
+}).RequireAuthorization("AdminOnly");
+
+categories.MapGet("/", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var data = await dbContext.Categories
+        .OrderBy(x => x.Name)
+        .Select(x => new CategoryResponse(x.Id, x.Name))
+        .ToListAsync(cancellationToken);
+
+    return Results.Ok(data);
+});
+
+var suppliers = app.MapGroup("/api/suppliers").RequireAuthorization();
+
+suppliers.MapPost("/", async (CreateSupplierRequest request, AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var supplier = new Supplier
+    {
+        Name = request.Name,
+        Contact = request.Contact
+    };
+
+    dbContext.Suppliers.Add(supplier);
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    return Results.Created($"/api/suppliers/{supplier.Id}", new SupplierResponse(supplier.Id, supplier.Name, supplier.Contact));
+}).RequireAuthorization("AdminOnly");
+
+suppliers.MapGet("/", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var data = await dbContext.Suppliers
+        .OrderBy(x => x.Name)
+        .Select(x => new SupplierResponse(x.Id, x.Name, x.Contact))
+        .ToListAsync(cancellationToken);
+
+    return Results.Ok(data);
+});
+
+var products = app.MapGroup("/api/products").RequireAuthorization();
+
+products.MapPost("/", async (CreateProductRequest request, AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var categoryExists = await dbContext.Categories.AnyAsync(x => x.Id == request.CategoryId, cancellationToken);
+    var supplierExists = await dbContext.Suppliers.AnyAsync(x => x.Id == request.SupplierId, cancellationToken);
+
+    if (!categoryExists || !supplierExists)
+    {
+        return Results.BadRequest(new { message = "Categoria ou fornecedor invalido." });
+    }
+
+    if (request.Quantity < 0)
+    {
+        return Results.BadRequest(new { message = "A quantidade inicial nao pode ser negativa." });
+    }
+
+    var product = new Product
+    {
+        Name = request.Name,
+        CategoryId = request.CategoryId,
+        SupplierId = request.SupplierId,
+        Price = request.Price,
+        Quantity = request.Quantity
+    };
+
+    dbContext.Products.Add(product);
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    var created = await dbContext.Products
+        .Include(x => x.Category)
+        .Include(x => x.Supplier)
+        .FirstAsync(x => x.Id == product.Id, cancellationToken);
+
+    return Results.Created($"/api/products/{created.Id}", ToProductResponse(created));
+}).RequireAuthorization("AdminOnly");
+
+products.MapGet("/", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var data = await dbContext.Products
+        .Include(x => x.Category)
+        .Include(x => x.Supplier)
+        .OrderBy(x => x.Name)
+        .ToListAsync(cancellationToken);
+
+    return Results.Ok(data.Select(ToProductResponse));
+});
+
+products.MapPut("/{id:int}", async (
+    int id,
+    UpdateProductRequest request,
+    AppDbContext dbContext,
+    CancellationToken cancellationToken) =>
+{
+    var product = await dbContext.Products.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    if (product is null)
+    {
+        return Results.NotFound();
+    }
+
+    var categoryExists = await dbContext.Categories.AnyAsync(x => x.Id == request.CategoryId, cancellationToken);
+    var supplierExists = await dbContext.Suppliers.AnyAsync(x => x.Id == request.SupplierId, cancellationToken);
+
+    if (!categoryExists || !supplierExists)
+    {
+        return Results.BadRequest(new { message = "Categoria ou fornecedor invalido." });
+    }
+
+    product.Name = request.Name;
+    product.CategoryId = request.CategoryId;
+    product.SupplierId = request.SupplierId;
+    product.Price = request.Price;
+
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    var updated = await dbContext.Products
+        .Include(x => x.Category)
+        .Include(x => x.Supplier)
+        .FirstAsync(x => x.Id == id, cancellationToken);
+
+    return Results.Ok(ToProductResponse(updated));
+}).RequireAuthorization("AdminOnly");
+
+products.MapDelete("/{id:int}", async (int id, AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var product = await dbContext.Products.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    if (product is null)
+    {
+        return Results.NotFound();
+    }
+
+    dbContext.Products.Remove(product);
+    await dbContext.SaveChangesAsync(cancellationToken);
+    return Results.NoContent();
+}).RequireAuthorization("AdminOnly");
+
+var movements = app.MapGroup("/api/movements").RequireAuthorization();
+
+movements.MapPost("/", async (
+    CreateMovementRequest request,
+    IStockService stockService,
+    HttpContext httpContext,
+    CancellationToken cancellationToken) =>
+{
+    try
+    {
+        var movement = await stockService.RegisterMovementAsync(request, httpContext.User.GetUserId(), cancellationToken);
+        return Results.Created($"/api/movements/{movement.Id}", ToMovementResponse(movement));
+    }
+    catch (KeyNotFoundException ex)
+    {
+        return Results.NotFound(new { message = ex.Message });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+}).RequireAuthorization("MovementOperator");
+
+movements.MapGet("/", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var data = await dbContext.StockMovements
+        .Include(x => x.Product)
+        .Include(x => x.User)
+        .OrderByDescending(x => x.DateUtc)
+        .ToListAsync(cancellationToken);
+
+    return Results.Ok(data.Select(ToMovementResponse));
+});
+
+var reports = app.MapGroup("/api/reports").RequireAuthorization("ManagerOrAdmin");
+
+reports.MapGet("/stock", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var data = await dbContext.Products
+        .Include(x => x.Category)
+        .Include(x => x.Supplier)
+        .OrderBy(x => x.Name)
+        .Select(x => new StockReportItemResponse(
+            x.Id,
+            x.Name,
+            x.Category!.Name,
+            x.Supplier!.Name,
+            x.Quantity,
+            x.Price,
+            x.Quantity < 5))
+        .ToListAsync(cancellationToken);
+
+    return Results.Ok(data);
+});
+
+reports.MapGet("/movements", async (DateTime? startUtc, DateTime? endUtc, AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var query = dbContext.StockMovements
+        .Include(x => x.Product)
+        .Include(x => x.User)
+        .AsQueryable();
+
+    if (startUtc.HasValue)
+    {
+        query = query.Where(x => x.DateUtc >= startUtc.Value);
+    }
+
+    if (endUtc.HasValue)
+    {
+        query = query.Where(x => x.DateUtc <= endUtc.Value);
+    }
+
+    var data = await query
+        .OrderByDescending(x => x.DateUtc)
+        .ToListAsync(cancellationToken);
+
+    return Results.Ok(data.Select(ToMovementResponse));
+});
+
+reports.MapGet("/top-selling", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var data = await dbContext.StockMovements
+        .Where(x => x.Type == MovementType.Exit)
+        .GroupBy(x => new { x.ProductId, Product = x.Product!.Name })
+        .Select(group => new TopSellingProductResponse(group.Key.ProductId, group.Key.Product, group.Sum(x => x.Quantity)))
+        .OrderByDescending(x => x.TotalSold)
+        .ToListAsync(cancellationToken);
+
+    return Results.Ok(data);
+});
+
+app.Run();
+
+static ProductResponse ToProductResponse(Product product) =>
+    new(
+        product.Id,
+        product.Name,
+        product.CategoryId,
+        product.Category?.Name ?? string.Empty,
+        product.SupplierId,
+        product.Supplier?.Name ?? string.Empty,
+        product.Price,
+        product.Quantity,
+        product.Quantity < 5);
+
+static MovementResponse ToMovementResponse(StockMovement movement) =>
+    new(
+        movement.Id,
+        movement.ProductId,
+        movement.Product?.Name ?? string.Empty,
+        movement.Type,
+        movement.Quantity,
+        movement.DateUtc,
+        movement.UserId,
+        movement.User?.Name ?? string.Empty);
+
+public partial class Program;

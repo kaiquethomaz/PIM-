@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+
+  <link rel="stylesheet" href="global.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+
+  <div class="sidebar">
+
+  <h2 id="nomeComercio">NexaFlow</h2>
+
+  <ul class="menu-topo">
+
+    <li onclick="ir('dashboard.html')">
+      <span class="material-icons">dashboard</span>
+      Dashboard
+    </li>
+
+    <li onclick="ir('estoque.html')">
+      <span class="material-icons">inventory_2</span>
+      Estoque
+    </li>
+
+    <li onclick="ir('vendas.html')">
+      <span class="material-icons">point_of_sale</span>
+      Vendas
+    </li>
+
+        <li class="somente-admin-gerente" onclick="ir('relatorios.html')">
+      <span class="material-icons">bar_chart</span>
+      Relatórios
+    </li>
+
+  </ul>
+
+  <ul class="menu-bottom">
+
+    <li class="somente-admin" onclick="ir('configuracoes.html')">
+      <span class="material-icons">settings</span>
+      Configurações
+    </li>
+
+    <li onclick="logout()">
+      <span class="material-icons">logout</span>
+      Sair
+    </li>
+
+  </ul>
+
+</div>
+
+  <div class="content">
+    <div class="dashboard-header">
+      <div class="dashboard-titles">
+        <h1>Dashboard</h1>
+        <p class="dashboard-subtitle">Entradas e saídas do estoque em um só lugar.</p>
+      </div>
+
+      <div class="filtros">
+        <span class="material-icons">calendar_month</span>
+        <div class="filtro-item">
+          <label for="filtroPeriodo">Período</label>
+          <select id="filtroPeriodo" onchange="filtrarDashboard()">
+            <option value="mensal">Mensal</option>
+            <option value="trimestral">Trimestral</option>
+            <option value="anual">Anual</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <p id="erroDashboard"></p>
+
+    <div class="graficos">
+      <div class="grafico-card maior">
+        <div class="legenda">
+          <span>Entrada <b class="verde"></b></span>
+          <span>Saída <b class="vermelho"></b></span>
+        </div>
+
+        <canvas id="graficoEntradaSaida"></canvas>
+      </div>
+
+      <div class="grafico-card menor">
+        <h3>Mais vendidos</h3>
+        <canvas id="graficoMaisVendidos"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function ir(pagina) {
+    window.location.href = pagina;
+  }
+
+  function logout() {
+    localStorage.removeItem("usuarioLogado");
+    window.location.href = "login.html";
+  }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/global.js"></script>
+<script src="js/dashboard.js"></script>
+
+</body>
+</html>
+
+<!-- pronto -->

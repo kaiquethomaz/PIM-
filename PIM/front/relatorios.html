@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatórios</title>
+
+  <link rel="stylesheet" href="global.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+
+<div class="sidebar">
+
+  <h2 id="nomeComercio">NexaFlow</h2>
+
+  <ul class="menu-topo">
+
+    <li class="somente-admin-gerente" onclick="ir('dashboard.html')">
+      <span class="material-icons">dashboard</span>
+      Dashboard
+    </li>
+
+    <li onclick="ir('estoque.html')">
+      <span class="material-icons">inventory_2</span>
+      Estoque
+    </li>
+
+    <li onclick="ir('vendas.html')">
+      <span class="material-icons">point_of_sale</span>
+      Vendas
+    </li>
+
+    <li class="ativo somente-admin-gerente" onclick="ir('relatorios.html')">
+      <span class="material-icons">bar_chart</span>
+      Relatórios
+    </li>
+
+  </ul>
+
+  <ul class="menu-bottom">
+
+    <li class="somente-admin" onclick="ir('configuracoes.html')">
+      <span class="material-icons">settings</span>
+      Configurações
+    </li>
+
+    <li onclick="logout()">
+      <span class="material-icons">logout</span>
+      Sair
+    </li>
+
+  </ul>
+
+</div>
+
+  <div class="content">
+    <h1>Relatórios</h1>
+
+    <div class="cards-relatorio">
+      <div class="relatorio-card">
+        <h3>Total vendido</h3>
+        <p id="totalVendido">R$ 0,00</p>
+      </div>
+
+      <div class="relatorio-card">
+        <h3>Quantidade vendida</h3>
+        <p id="qtdVendida">0</p>
+      </div>
+
+      <div class="relatorio-card">
+        <h3>Pagamento mais usado</h3>
+        <p id="pagamentoMaisUsado">-</p>
+      </div>
+    </div>
+
+    <div class="cabecalho-tabela">
+      <span>ID</span>
+      <span>Produto</span>
+      <span>Data</span>
+      <span>Total</span>
+      <span>Pagamento</span>
+      <span>Quantidade</span>
+    </div>
+
+    <div class="tabela-card">
+      <table>
+        <tbody id="tabelaRelatorios"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function ir(pagina) {
+    window.location.href = pagina;
+  }
+
+  function logout() {
+    localStorage.removeItem("usuarioLogado");
+    localStorage.removeItem("perfilUsuario");
+    window.location.href = "login.html";
+  }
+</script>
+
+<script src="js/global.js"></script>
+<script src="js/relatorios.js"></script>
+
+</body>
+</html>
+
+<!-- pronto -->

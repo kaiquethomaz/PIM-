@@ -1,0 +1,42 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PIM", "PIM", "{DBCBE456-FA97-4913-472C-B7EC2A6DF799}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{9ECB2AB3-53CA-4A97-B2F6-FA2DC8963AF3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inventory.Api", "PIM\src\Inventory.Api\Inventory.Api.csproj", "{C34AE1A5-FB77-E4EB-8410-C5E4196A9953}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E6FE708A-6559-7C1C-F3A7-44B5DE02E76F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inventory.Api.Tests", "PIM\tests\Inventory.Api.Tests\Inventory.Api.Tests.csproj", "{160C638F-EA83-A621-3212-87F22EBE249F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C34AE1A5-FB77-E4EB-8410-C5E4196A9953}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C34AE1A5-FB77-E4EB-8410-C5E4196A9953}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C34AE1A5-FB77-E4EB-8410-C5E4196A9953}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C34AE1A5-FB77-E4EB-8410-C5E4196A9953}.Release|Any CPU.Build.0 = Release|Any CPU
+		{160C638F-EA83-A621-3212-87F22EBE249F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{160C638F-EA83-A621-3212-87F22EBE249F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{160C638F-EA83-A621-3212-87F22EBE249F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{160C638F-EA83-A621-3212-87F22EBE249F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9ECB2AB3-53CA-4A97-B2F6-FA2DC8963AF3} = {DBCBE456-FA97-4913-472C-B7EC2A6DF799}
+		{C34AE1A5-FB77-E4EB-8410-C5E4196A9953} = {9ECB2AB3-53CA-4A97-B2F6-FA2DC8963AF3}
+		{E6FE708A-6559-7C1C-F3A7-44B5DE02E76F} = {DBCBE456-FA97-4913-472C-B7EC2A6DF799}
+		{160C638F-EA83-A621-3212-87F22EBE249F} = {E6FE708A-6559-7C1C-F3A7-44B5DE02E76F}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3E848E43-AD3B-41D2-B74D-61B444A162EB}
+	EndGlobalSection
+EndGlobal

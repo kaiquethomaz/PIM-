@@ -1,0 +1,909 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+
+/**********************************CADASTRO EMPRESA*********************************************8*/
+body {
+  background: #e7e7e7;
+  font-family: Arial, sans-serif;
+  color: #111;
+     overflow-x: hidden
+}
+
+.logo {
+  position: absolute;
+  top: 30px;
+  left: 35px;
+  color: #1e3a8a;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.cadastro-container {
+  width: 900px;
+  height: 470px;
+  background: white;
+  margin: 120px auto;
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+}
+
+.cadastro-left {
+  width: 38%;
+  background: #1e3a8a;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 25px;
+  text-align: center;
+}
+
+.cadastro-left h2 {
+  font-size: 30px;
+  line-height: 1.25;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid white;
+  color: white;
+  border-radius: 25px;
+  padding: 9px 32px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.cadastro-right {
+  flex: 1;
+  padding: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.cadastro-right h1 {
+  text-align: center;
+  font-size: 30px;
+  font-weight: 400;
+  margin-bottom: 35px;
+}
+
+.campo {
+  height: 38px;
+  background: #f3f3f3;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+}
+
+.campo span {
+  color: #666;
+  font-size: 20px;
+  margin-right: 8px;
+}
+
+.campo input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 14px;
+}
+
+.btn-principal {
+  width: 150px;
+  margin: 20px auto 0;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#erro {
+  color: #c62828;
+  text-align: center;
+  font-size: 13px;
+}
+
+#erroDashboard {
+  color: #c62828;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+
+/**********************************LOGIN*********************************************8*/
+
+.login-container {
+  width: 420px;
+  background: white;
+  margin: 180px auto;
+  padding: 50px;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+}
+
+.login-container h1 {
+  text-align: center;
+  color: #1e3a8a;
+  margin-bottom: 40px;
+}
+
+.esqueceu {
+  text-align: right;
+  font-size: 13px;
+  margin-top: -10px;
+  margin-bottom: 20px;
+  color: #555;
+  cursor: pointer;
+}
+
+.btn-principal {
+  width: 150px;
+  display: block;
+  margin: 20px auto 0;
+
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.campo select {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 14px;
+  cursor: pointer;
+  color: #111;
+}
+
+/* ================= DASHBOARD ================= */
+
+.container {
+  display: flex;
+  min-height: 100vh;
+    min-height: 100vh;
+}
+
+.sidebar {
+  width: 250px;
+  min-height: 100vh;
+  background: #1e3a8a;
+  color: white;
+  padding: 30px 20px;
+}
+
+.sidebar h2 {
+  font-size: 26px;
+  margin-bottom: 55px;
+}
+
+.sidebar ul {
+  list-style: none;
+}
+
+.sidebar li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.sidebar li:hover,
+.sidebar li.ativo {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.sidebar span {
+  font-size: 24px;
+}
+
+.content {
+  flex: 1;
+  padding: 30px 40px;
+}
+
+.content h1 {
+  font-size: 36px;
+  margin-bottom: 20px;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.dashboard-titles h1 {
+  margin-bottom: 6px;
+}
+
+.dashboard-subtitle {
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.filtros {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.filtros span {
+  color: #1e3a8a;
+  font-size: 22px;
+}
+
+.filtro-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filtro-item label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.filtro-item select {
+  min-width: 160px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  font-size: 14px;
+}
+
+.graficos {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.grafico-card {
+  background: #ffffff;
+  padding: 22px;
+  border-radius: 14px;
+  border: 1px solid #eef2f7;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.grafico-card.maior {
+  flex: 2;
+  min-width: 520px;
+}
+
+.grafico-card.menor {
+  flex: 1;
+  min-width: 260px;
+}
+
+.grafico-card h3 {
+  margin-bottom: 12px;
+  color: #1e3a8a;
+  font-size: 18px;
+}
+
+.legenda {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.legenda span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legenda b {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+  border-radius: 50%;
+}
+
+.verde {
+  background: #22c55e;
+}
+
+.vermelho {
+  background: #ef4444;
+}
+
+canvas {
+  max-height: 240px;
+}
+
+/* ================= ESTOQUE ================= */
+/* ================= ESTOQUE ================= */
+
+.topo-tabela {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+.btn-novo {
+  height: 38px;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0 18px;
+  cursor: pointer;
+}
+
+.topo-tabela input {
+  flex: 1;
+  height: 38px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0 14px;
+}
+
+.filtros-tabela {
+  display: flex;
+  gap: 14px;
+}
+
+.filtros-tabela select {
+  width: 140px;
+  height: 38px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0 10px;
+}
+
+.cabecalho-tabela {
+  height: 35px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+
+  display: grid;
+  grid-template-columns: 1fr 2fr 1.5fr 1.3fr 1.5fr 1fr;
+
+  align-items: center;
+  text-align: center;
+  font-size: 18px;
+
+  margin-bottom: 8px;
+}
+
+.tabela-card {
+  background: white;
+  min-height: 430px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.tabela-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela-card tr {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1.5fr 1.3fr 1.5fr 1fr;
+  align-items: center;
+}
+
+.tabela-card td {
+  padding: 18px 10px;
+  text-align: center;
+}
+
+.status {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  border-radius: 50%;
+}
+
+.status.ok {
+  background: #22c55e;
+}
+
+.status.medio {
+  background: #facc15;
+}
+
+.status.baixo {
+  background: #ef4444;
+}
+
+.acoes {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+}
+
+.acoes span {
+  cursor: pointer;
+  color: #111;
+}
+
+.acoes span:hover {
+  color: #1e3a8a;
+}
+
+#tabelaVendas tr {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1.5fr 1.3fr 1.5fr 1fr;
+  align-items: center;
+}
+
+#tabelaVendas td {
+  padding: 18px 10px;
+  text-align: center;
+}
+
+#tabelaVendas tr:not(:last-child) {
+  border-bottom: 1px solid #eee;
+}
+
+#tabelaRelatorios tr {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1.5fr 1.3fr 1.5fr 1fr;
+  align-items: center;
+}
+
+#tabelaRelatorios td {
+  padding: 18px 10px;
+  text-align: center;
+}
+
+#tabelaRelatorios tr:not(:last-child) {
+  border-bottom: 1px solid #eee;
+}
+/* ================= CADASTRO PRODUTO ================= */
+
+.produto-form {
+  width: 430px;
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  margin: 40px auto;
+}
+
+.produto-form input {
+  width: 100%;
+  height: 38px;
+  margin-bottom: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0 12px;
+}
+
+.produto-form select {
+  width: 100%;
+  height: 38px;
+  margin-bottom: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0 12px;
+  background: #fff;
+}
+
+.produto-form button {
+  width: 100%;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 11px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ================= VENDAS ================= */
+
+.venda-form {
+  width: 900px;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 10px auto 25px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 1.2fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.venda-form input,
+.venda-form select,
+.venda-form button {
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  padding: 0 12px;
+}
+
+.venda-form button {
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.venda-form #erro {
+  grid-column: 1 / -1;
+}
+
+#tabelaVendas tr {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1.2fr 1fr 1.2fr 1fr;
+  align-items: center;
+}
+
+#tabelaVendas td {
+  padding: 18px 10px;
+  text-align: center;
+}
+
+#tabelaVendas tr:not(:last-child) {
+  border-bottom: 1px solid #eee;
+}
+
+/* ================= RELATÓRIOS ================= */
+
+.cards-relatorio {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.relatorio-card {
+  flex: 1;
+  background: white;
+  padding: 22px;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+.relatorio-card h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #555;
+}
+
+.relatorio-card p {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1e3a8a;
+}
+
+#tabelaRelatorios tr {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1.2fr 1fr 1.2fr 1fr;
+  align-items: center;
+}
+
+#tabelaRelatorios td {
+  padding: 18px 10px;
+  text-align: center;
+}
+
+#tabelaRelatorios tr:not(:last-child) {
+  border-bottom: 1px solid #eee;
+}
+
+/* ================= CONFIGURAÇÕES ================= */
+
+.config-grid {
+    display: grid;
+  grid-template-columns: repeat(2, 320px);
+  gap: 20px;
+
+  justify-content: center;
+  align-content: center;
+
+  margin-top: 40px;
+}
+
+.config-card {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+.config-card h3 {
+  margin-bottom: 20px;
+  color: #1e3a8a;
+}
+
+.config-card p {
+  margin-bottom: 6px;
+  margin-top: 14px;
+}
+
+.config-card input {
+  width: 100%;
+  height: 38px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0 10px;
+  margin-bottom: 14px;
+}
+
+.config-card button {
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 6px;
+  background: #1e3a8a;
+  color: white;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.tema-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar {
+  width: 250px;
+  min-height: 100vh;
+  background: #1e3a8a;
+  color: white;
+  padding: 30px 20px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-topo {
+  margin-top: 40px;
+}
+
+.menu-bottom {
+  margin-top: auto;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.menu-topo {
+  margin-top: 40px;
+}
+
+.menu-bottom {
+  margin-top: auto;
+}
+.content {
+  overflow-y: auto;
+}
+.produto-form {
+  width: 420px;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  margin: 10px auto 20px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+/* ================= RESPONSIVO ================= */
+
+@media (max-width: 896px) {
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .container {
+    flex-direction: column;
+  }
+
+  /* SIDEBAR VIRA TOPO */
+  .sidebar {
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    padding: 18px;
+  }
+
+  .sidebar h2 {
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+
+  .menu-topo,
+  .menu-bottom {
+    margin-top: 10px;
+  }
+
+  .sidebar ul {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .sidebar li {
+    font-size: 14px;
+    padding: 10px;
+    margin-bottom: 0;
+  }
+
+  .sidebar span {
+    font-size: 20px;
+  }
+
+  /* CONTEÚDO */
+  .content {
+    padding: 20px;
+  }
+
+  .content h1 {
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+
+  /* DASHBOARD */
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filtros {
+    width: 100%;
+  }
+
+  .filtro-item select {
+    width: 100%;
+  }
+
+  .graficos {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .grafico-card.maior,
+  .grafico-card.menor {
+    width: 95%;
+    min-width: unset;
+    margin: 0 auto;
+  }
+
+  .grafico-card {
+    padding: 16px;
+  }
+
+  canvas {
+    width: 100% !important;
+    max-height: 260px;
+  }
+
+  /* ESTOQUE */
+  .topo-tabela {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .topo-tabela input,
+  .btn-novo {
+    width: 100%;
+  }
+
+  .filtros-tabela {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .filtros-tabela select {
+    width: 100%;
+  }
+
+  /* TABELAS */
+  .cabecalho-tabela {
+    display: none;
+  }
+
+  .tabela-card {
+    overflow-x: auto;
+  }
+
+  .tabela-card table {
+    min-width: 700px;
+  }
+
+  .tabela-card tr,
+  #tabelaVendas tr,
+  #tabelaRelatorios tr {
+    min-width: 700px;
+  }
+
+  /* FORMULÁRIOS */
+  .produto-form,
+  .venda-form {
+    width: 100%;
+    margin: 15px auto 25px;
+  }
+
+  .venda-form {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  /* RELATÓRIOS */
+  .cards-relatorio {
+    flex-direction: column;
+  }
+
+  /* CONFIGURAÇÕES */
+  .config-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* LOGIN */
+  .login-container {
+    width: 90%;
+    margin: 140px auto;
+    padding: 35px 25px;
+  }
+
+  .logo {
+    font-size: 28px;
+    top: 25px;
+    left: 25px;
+  }
+
+  /* CADASTRO EMPRESA */
+  .cadastro-container {
+    width: 90%;
+    height: auto;
+    flex-direction: column;
+    margin: 100px auto;
+  }
+
+  .cadastro-left {
+    width: 100%;
+    padding: 40px 20px;
+  }
+
+  .cadastro-right {
+    padding: 35px 25px;
+  }
+  .graficos {
+  align-items: center;
+}
+}
