@@ -60,22 +60,62 @@
     <div class="dashboard-header">
       <div class="dashboard-titles">
         <h1>Dashboard</h1>
-        <p class="dashboard-subtitle">Entradas e saídas do estoque em um só lugar.</p>
+        <p class="page-subtitle">Visão geral das entradas e saídas do estoque.</p>
       </div>
 
-      <div class="filtros">
-        <span class="material-icons">calendar_month</span>
-        <div class="filtro-item">
-          <label for="filtroPeriodo">Período</label>
-          <select id="filtroPeriodo" onchange="filtrarDashboard()">
-            <option value="mensal">Mensal</option>
-            <option value="trimestral">Trimestral</option>
-            <option value="anual">Anual</option>
-          </select>
+      <div class="page-actions">
+        <div class="filtros">
+          <span class="material-icons">calendar_month</span>
+          <div class="filtro-item">
+            <label for="filtroPeriodo">Período</label>
+            <select id="filtroPeriodo" onchange="filtrarDashboard()">
+              <option value="mensal">Mensal</option>
+              <option value="trimestral">Trimestral</option>
+              <option value="anual">Anual</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
     <p id="erroDashboard"></p>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="material-icons kpi-icon">arrow_downward</span>
+        <div>
+          <span class="kpi-label">Entradas no período</span>
+          <div class="kpi-value" id="resumoEntradas">0</div>
+          <span class="kpi-meta">itens adicionados</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <span class="material-icons kpi-icon">arrow_upward</span>
+        <div>
+          <span class="kpi-label">Saídas no período</span>
+          <div class="kpi-value" id="resumoSaidas">0</div>
+          <span class="kpi-meta">itens vendidos</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <span class="material-icons kpi-icon">difference</span>
+        <div>
+          <span class="kpi-label">Saldo movimentado</span>
+          <div class="kpi-value" id="resumoSaldo">0</div>
+          <span class="kpi-meta">entrada - saída</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <span class="material-icons kpi-icon">star</span>
+        <div>
+          <span class="kpi-label">Mais vendido</span>
+          <div class="kpi-value" id="resumoTopProduto">-</div>
+          <span class="kpi-meta" id="resumoTopQtd">0 itens</span>
+        </div>
+      </div>
+    </div>
 
     <div class="graficos">
       <div class="grafico-card maior">
@@ -90,6 +130,27 @@
       <div class="grafico-card menor">
         <h3>Mais vendidos</h3>
         <canvas id="graficoMaisVendidos"></canvas>
+      </div>
+    </div>
+
+    <p id="erroForecast"></p>
+
+    <div class="graficos forecast-area">
+      <div class="grafico-card maior">
+        <h3>Previsão de demanda (7 dias)</h3>
+        <canvas id="graficoDemanda"></canvas>
+      </div>
+    </div>
+
+    <div class="graficos forecast-area">
+      <div class="grafico-card menor">
+        <h3>Previsão de vendas (7 dias)</h3>
+        <canvas id="graficoVendasPrev"></canvas>
+      </div>
+
+      <div class="grafico-card menor">
+        <h3>Previsão de faturamento (7 dias)</h3>
+        <canvas id="graficoFaturamentoPrev"></canvas>
       </div>
     </div>
   </div>

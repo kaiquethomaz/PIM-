@@ -51,12 +51,17 @@
   </div>
 
   <div class="content">
-    <h1>Configurações</h1>
+    <div class="page-header">
+      <div>
+        <h1>Configurações</h1>
+        <p class="page-subtitle">Ajuste dados da empresa e preferências do sistema.</p>
+      </div>
+    </div>
 
     <div class="config-grid">
 
       <div class="config-card">
-        <h3>Dados da Empresa</h3>
+        <h3><span class="material-icons">business</span> Dados da Empresa</h3>
 
         <p><strong>Empresa:</strong></p>
         <input type="text" id="empresa">
@@ -72,7 +77,7 @@
 
 
       <div class="config-card">
-        <h3>Sistema</h3>
+        <h3><span class="material-icons">tune</span> Sistema</h3>
 
         <button onclick="limparVendas()">
           Limpar vendas
@@ -84,7 +89,7 @@
       </div>
 
       <div class="config-card somente-admin">
-        <h3>Usuários</h3>
+        <h3><span class="material-icons">group</span> Usuários</h3>
 
         <button onclick="ir('cadastro-usuario.html')">
           Cadastrar usuário

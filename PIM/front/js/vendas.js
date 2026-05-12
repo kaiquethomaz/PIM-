@@ -1,96 +1,223 @@
-/*pronto*/
-let produtos = JSON.parse(localStorage.getItem("produtos")) || [];
-let vendas = JSON.parse(localStorage.getItem("vendas")) || [];
+let produtos = [];
+let movimentos = [];
+let vendas = [];
 
 const selectProduto = document.getElementById("produto");
 
-function carregarProdutos() {
+function limparSessao() {
+  localStorage.removeItem("perfilUsuario");
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("authExpiresAtUtc");
+  localStorage.removeItem("usuarioNome");
+  localStorage.removeItem("usuarioEmail");
+}
+
+function formatarMoeda(valor) {
+  return valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
+}
+
+function isSaida(tipo) {
+  return tipo === 2 || tipo === "Exit" || tipo === "saida";
+}
+
+async function carregarProdutos() {
+  const resposta = await apiFetch("/api/products");
+
+  if (resposta.status === 401 || resposta.status === 403) {
+    limparSessao();
+    window.location.href = "login.html";
+    return [];
+  }
+
+  if (!resposta.ok) {
+    throw new Error("Falha ao carregar produtos.");
+  }
+
+  return await resposta.json();
+}
+
+async function carregarMovimentos() {
+  const resposta = await apiFetch("/api/movements");
+
+  if (resposta.status === 401 || resposta.status === 403) {
+    limparSessao();
+    window.location.href = "login.html";
+    return [];
+  }
+
+  if (!resposta.ok) {
+    throw new Error("Falha ao carregar movimentações.");
+  }
+
+  return await resposta.json();
+}
+
+function preencherSelectProdutos() {
   selectProduto.innerHTML = `<option value="">Selecione o produto</option>`;
 
-  produtos.forEach((produto, index) => {
+  produtos.forEach(produto => {
     selectProduto.innerHTML += `
-      <option value="${index}">
-        ${produto.nome} - Estoque: ${produto.quantidade}
+      <option value="${produto.id}">
+        ${produto.name} - Estoque: ${produto.quantity}
       </option>
     `;
   });
 }
 
-function renderizarVendas() {
+function mapearVendas(movimentosLista) {
+  const produtosMap = new Map(produtos.map(produto => [produto.id, produto]));
+
+  return movimentosLista
+    .filter(mov => isSaida(mov.type))
+    .map(mov => {
+      const produto = produtosMap.get(mov.productId);
+      const total = produto ? Number(produto.price) * Number(mov.quantity) : 0;
+
+      return {
+        id: mov.id,
+        produto: mov.product || produto?.name || "-",
+        data: new Date(mov.dateUtc).toLocaleDateString("pt-BR"),
+        total,
+        pagamento: "—",
+        quantidade: mov.quantity
+      };
+    });
+}
+
+function renderizarVendas(lista) {
   const tabela = document.getElementById("tabelaVendas");
   tabela.innerHTML = "";
 
-  vendas.forEach((venda, index) => {
+  if (lista.length === 0) {
+    tabela.innerHTML = `
+      <tr>
+        <td colspan="6">Nenhuma venda registrada.</td>
+      </tr>
+    `;
+    atualizarResumoVendas([]);
+    return;
+  }
+
+  lista.forEach((venda, index) => {
     tabela.innerHTML += `
       <tr>
         <td>#${index + 1}</td>
         <td>${venda.produto}</td>
         <td>${venda.data}</td>
-        <td>R$ ${venda.total}</td>
+        <td>${formatarMoeda(venda.total)}</td>
         <td>${venda.pagamento}</td>
         <td>${venda.quantidade}</td>
       </tr>
     `;
   });
+
+  atualizarResumoVendas(lista);
 }
 
-function registrarVenda() {
-  const indexProduto = document.getElementById("produto").value;
+function atualizarResumoVendas(lista) {
+  const totalVendas = lista.length;
+  const receita = lista.reduce((total, venda) => {
+    return total + Number(venda.total || 0);
+  }, 0);
+  const ticketMedio = totalVendas > 0 ? receita / totalVendas : 0;
+
+  const totalEl = document.getElementById("resumoTotalVendas");
+  const receitaEl = document.getElementById("resumoReceita");
+  const ticketEl = document.getElementById("resumoTicket");
+
+  if (totalEl) {
+    totalEl.innerText = totalVendas.toLocaleString("pt-BR");
+  }
+
+  if (receitaEl) {
+    receitaEl.innerText = formatarMoeda(receita);
+  }
+
+  if (ticketEl) {
+    ticketEl.innerText = formatarMoeda(ticketMedio);
+  }
+}
+
+async function registrarVenda() {
+  const produtoId = Number(selectProduto.value);
   const quantidade = Number(document.getElementById("quantidade").value);
   const pagamento = document.getElementById("pagamento").value;
   const erro = document.getElementById("erro");
 
   erro.innerText = "";
 
-  if (indexProduto === "" || !quantidade || !pagamento) {
+  if (!produtoId || !quantidade || !pagamento) {
     erro.innerText = "Preencha todos os campos.";
     return;
   }
 
-  const produto = produtos[indexProduto];
+  const produto = produtos.find(item => item.id === produtoId);
+
+  if (!produto) {
+    erro.innerText = "Produto inválido.";
+    return;
+  }
 
   if (quantidade <= 0) {
     erro.innerText = "Quantidade inválida.";
     return;
   }
 
-  if (produto.quantidade < quantidade) {
+  if (produto.quantity < quantidade) {
     erro.innerText = "Estoque insuficiente.";
     return;
   }
 
-  produto.quantidade -= quantidade;
-
-  let movimentacoes = JSON.parse(localStorage.getItem("movimentacoes")) || [];
-
-movimentacoes.push({
-  tipo: "saida",
-  produto: produto.nome,
-  quantidade: quantidade,
-  data: new Date().toLocaleDateString("pt-BR")
-});
-
-localStorage.setItem("movimentacoes", JSON.stringify(movimentacoes));
-
-  const total = (Number(produto.valor) * quantidade).toFixed(2);
-
-  vendas.push({
-    produto: produto.nome,
-    quantidade,
-    total,
-    pagamento,
-    data: new Date().toLocaleDateString("pt-BR")
+  const resposta = await apiFetch("/api/movements", {
+    method: "POST",
+    body: JSON.stringify({
+      ProductId: produtoId,
+      Type: 2,
+      Quantity: quantidade
+    })
   });
 
-  localStorage.setItem("produtos", JSON.stringify(produtos));
-  localStorage.setItem("vendas", JSON.stringify(vendas));
+  if (resposta.status === 401 || resposta.status === 403) {
+    limparSessao();
+    window.location.href = "login.html";
+    return;
+  }
+
+  if (!resposta.ok) {
+    const erroApi = await resposta.json().catch(() => null);
+    erro.innerText = erroApi?.message || "Não foi possível registrar a venda.";
+    return;
+  }
 
   document.getElementById("quantidade").value = "";
   document.getElementById("pagamento").value = "";
 
-  carregarProdutos();
-  renderizarVendas();
+  await carregarDados();
 }
 
-carregarProdutos();
-renderizarVendas();
+async function carregarDados() {
+  const erro = document.getElementById("erro");
+  erro.innerText = "";
+
+  try {
+    const [produtosApi, movimentosApi] = await Promise.all([
+      carregarProdutos(),
+      carregarMovimentos()
+    ]);
+
+    produtos = produtosApi || [];
+    movimentos = movimentosApi || [];
+    vendas = mapearVendas(movimentos);
+
+    preencherSelectProdutos();
+    renderizarVendas(vendas);
+  } catch (error) {
+    renderizarVendas([]);
+    erro.innerText = "Não foi possível carregar os dados de vendas.";
+  }
+}
+
+carregarDados();

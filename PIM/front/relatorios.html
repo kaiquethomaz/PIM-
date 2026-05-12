@@ -57,22 +57,36 @@
 </div>
 
   <div class="content">
-    <h1>Relatórios</h1>
+    <div class="page-header">
+      <div>
+        <h1>Relatórios</h1>
+        <p class="page-subtitle">Resumo de vendas e formas de pagamento.</p>
+      </div>
+    </div>
 
-    <div class="cards-relatorio">
-      <div class="relatorio-card">
-        <h3>Total vendido</h3>
-        <p id="totalVendido">R$ 0,00</p>
+    <div class="kpi-grid">
+      <div class="kpi-card relatorio-card">
+        <div>
+          <span class="kpi-label">Total vendido</span>
+          <div class="kpi-value" id="totalVendido">R$ 0,00</div>
+          <span class="kpi-meta">no período</span>
+        </div>
       </div>
 
-      <div class="relatorio-card">
-        <h3>Quantidade vendida</h3>
-        <p id="qtdVendida">0</p>
+      <div class="kpi-card relatorio-card">
+        <div>
+          <span class="kpi-label">Quantidade vendida</span>
+          <div class="kpi-value" id="qtdVendida">0</div>
+          <span class="kpi-meta">itens</span>
+        </div>
       </div>
 
-      <div class="relatorio-card">
-        <h3>Pagamento mais usado</h3>
-        <p id="pagamentoMaisUsado">-</p>
+      <div class="kpi-card relatorio-card">
+        <div>
+          <span class="kpi-label">Pagamento mais usado</span>
+          <div class="kpi-value" id="pagamentoMaisUsado">-</div>
+          <span class="kpi-meta">preferência dos clientes</span>
+        </div>
       </div>
     </div>
 

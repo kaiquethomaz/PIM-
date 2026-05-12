@@ -33,6 +33,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IStockService, StockService>();
+builder.Services.AddScoped<IDemandForecastService, DemandForecastService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -65,8 +66,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole(UserRole.Admin.ToString()));
+    options.AddPolicy("CatalogManager", policy => policy.RequireRole(
+        UserRole.Admin.ToString(),
+        UserRole.Manager.ToString()));
     options.AddPolicy("ManagerOrAdmin", policy => policy.RequireRole(UserRole.Admin.ToString(), UserRole.Manager.ToString()));
-    options.AddPolicy("MovementOperator", policy => policy.RequireRole(UserRole.Admin.ToString(), UserRole.Employee.ToString()));
+    options.AddPolicy("MovementOperator", policy => policy.RequireRole(
+        UserRole.Admin.ToString(),
+        UserRole.Manager.ToString(),
+        UserRole.Employee.ToString()));
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -207,14 +214,22 @@ companies.MapPost("/login", async (
         return Results.Unauthorized();
     }
 
-    var user = new User
+    var user = await dbContext.Users
+        .FirstOrDefaultAsync(x => x.Email == company.Email, cancellationToken);
+
+    if (user is null)
     {
-        Id = company.Id,
-        Name = company.Name,
-        Email = company.Email,
-        PasswordHash = company.PasswordHash,
-        Role = UserRole.Admin
-    };
+        user = new User
+        {
+            Name = company.Name,
+            Email = company.Email,
+            PasswordHash = company.PasswordHash,
+            Role = UserRole.Admin
+        };
+
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
 
     var loginResponse = jwtTokenService.Generate(user);
 
@@ -312,7 +327,7 @@ categories.MapPost("/", async (CreateCategoryRequest request, AppDbContext dbCon
     await dbContext.SaveChangesAsync(cancellationToken);
 
     return Results.Created($"/api/categories/{category.Id}", new CategoryResponse(category.Id, category.Name));
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("CatalogManager");
 
 categories.MapGet("/", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
 {
@@ -338,7 +353,7 @@ suppliers.MapPost("/", async (CreateSupplierRequest request, AppDbContext dbCont
     await dbContext.SaveChangesAsync(cancellationToken);
 
     return Results.Created($"/api/suppliers/{supplier.Id}", new SupplierResponse(supplier.Id, supplier.Name, supplier.Contact));
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("CatalogManager");
 
 suppliers.MapGet("/", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
 {
@@ -385,7 +400,7 @@ products.MapPost("/", async (CreateProductRequest request, AppDbContext dbContex
         .FirstAsync(x => x.Id == product.Id, cancellationToken);
 
     return Results.Created($"/api/products/{created.Id}", ToProductResponse(created));
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("CatalogManager");
 
 products.MapGet("/", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
 {
@@ -431,7 +446,7 @@ products.MapPut("/{id:int}", async (
         .FirstAsync(x => x.Id == id, cancellationToken);
 
     return Results.Ok(ToProductResponse(updated));
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("CatalogManager");
 
 products.MapDelete("/{id:int}", async (int id, AppDbContext dbContext, CancellationToken cancellationToken) =>
 {
@@ -444,7 +459,7 @@ products.MapDelete("/{id:int}", async (int id, AppDbContext dbContext, Cancellat
     dbContext.Products.Remove(product);
     await dbContext.SaveChangesAsync(cancellationToken);
     return Results.NoContent();
-}).RequireAuthorization("AdminOnly");
+}).RequireAuthorization("CatalogManager");
 
 var movements = app.MapGroup("/api/movements").RequireAuthorization();
 
@@ -529,12 +544,197 @@ reports.MapGet("/top-selling", async (AppDbContext dbContext, CancellationToken 
 {
     var data = await dbContext.StockMovements
         .Where(x => x.Type == MovementType.Exit)
+        .Include(x => x.Product)
+        .ToListAsync(cancellationToken);
+
+    var result = data
         .GroupBy(x => new { x.ProductId, Product = x.Product!.Name })
         .Select(group => new TopSellingProductResponse(group.Key.ProductId, group.Key.Product, group.Sum(x => x.Quantity)))
         .OrderByDescending(x => x.TotalSold)
+        .ToList();
+
+    return Results.Ok(result);
+});
+
+reports.MapGet("/demand-forecast", async (
+    int? days,
+    IDemandForecastService demandForecastService,
+    CancellationToken cancellationToken) =>
+{
+    var horizonDays = days ?? 7;
+
+    if (horizonDays <= 0 || horizonDays > 30)
+    {
+        return Results.BadRequest(new { message = "O numero de dias deve estar entre 1 e 30." });
+    }
+
+    var resultado = await demandForecastService.ForecastAsync(horizonDays, cancellationToken);
+    if (resultado is null)
+    {
+        return Results.BadRequest(new { message = "Dados insuficientes para gerar previsao de demanda." });
+    }
+
+    return Results.Ok(resultado);
+});
+
+reports.MapPost("/demand-forecast", async (
+    ForecastRequest request,
+    IDemandForecastService demandForecastService,
+    CancellationToken cancellationToken) =>
+{
+    var horizonDays = request.HorizonDays <= 0 ? 7 : request.HorizonDays;
+
+    if (horizonDays <= 0 || horizonDays > 30)
+    {
+        return Results.BadRequest(new { message = "O numero de dias deve estar entre 1 e 30." });
+    }
+
+    if (request.Points.Count == 0)
+    {
+        return Results.BadRequest(new { message = "Informe dados para gerar previsao." });
+    }
+
+    var resultado = await demandForecastService
+        .ForecastFromSeriesAsync(request.Points, horizonDays, cancellationToken);
+
+    if (resultado is null)
+    {
+        return Results.BadRequest(new { message = "Dados insuficientes para gerar previsao de demanda." });
+    }
+
+    return Results.Ok(resultado);
+});
+
+reports.MapGet("/sales-forecast", async (
+    int? days,
+    AppDbContext dbContext,
+    IDemandForecastService demandForecastService,
+    CancellationToken cancellationToken) =>
+{
+    var horizonDays = days ?? 7;
+
+    if (horizonDays <= 0 || horizonDays > 30)
+    {
+        return Results.BadRequest(new { message = "O numero de dias deve estar entre 1 e 30." });
+    }
+
+    var pontos = await dbContext.StockMovements
+        .Where(x => x.Type == MovementType.Exit)
+        .GroupBy(x => x.DateUtc.Date)
+        .Select(group => new ForecastPointRequest(group.Key, group.Count()))
         .ToListAsync(cancellationToken);
 
-    return Results.Ok(data);
+    if (pontos.Count == 0)
+    {
+        return Results.BadRequest(new { message = "Dados insuficientes para gerar previsao de vendas." });
+    }
+
+    var resultado = await demandForecastService
+        .ForecastFromSeriesAsync(pontos, horizonDays, cancellationToken);
+
+    if (resultado is null)
+    {
+        return Results.BadRequest(new { message = "Dados insuficientes para gerar previsao de vendas." });
+    }
+
+    return Results.Ok(resultado);
+});
+
+reports.MapPost("/sales-forecast", async (
+    ForecastRequest request,
+    IDemandForecastService demandForecastService,
+    CancellationToken cancellationToken) =>
+{
+    var horizonDays = request.HorizonDays <= 0 ? 7 : request.HorizonDays;
+
+    if (horizonDays <= 0 || horizonDays > 30)
+    {
+        return Results.BadRequest(new { message = "O numero de dias deve estar entre 1 e 30." });
+    }
+
+    if (request.Points.Count == 0)
+    {
+        return Results.BadRequest(new { message = "Informe dados para gerar previsao." });
+    }
+
+    var resultado = await demandForecastService
+        .ForecastFromSeriesAsync(request.Points, horizonDays, cancellationToken);
+
+    if (resultado is null)
+    {
+        return Results.BadRequest(new { message = "Dados insuficientes para gerar previsao de vendas." });
+    }
+
+    return Results.Ok(resultado);
+});
+
+reports.MapGet("/revenue-forecast", async (
+    int? days,
+    AppDbContext dbContext,
+    IDemandForecastService demandForecastService,
+    CancellationToken cancellationToken) =>
+{
+    var horizonDays = days ?? 7;
+
+    if (horizonDays <= 0 || horizonDays > 30)
+    {
+        return Results.BadRequest(new { message = "O numero de dias deve estar entre 1 e 30." });
+    }
+
+    var pontos = await dbContext.StockMovements
+        .Where(x => x.Type == MovementType.Exit)
+        .Include(x => x.Product)
+        .ToListAsync(cancellationToken);
+
+    var revenues = pontos
+        .GroupBy(x => x.DateUtc.Date)
+        .Select(group => new ForecastPointRequest(
+            group.Key,
+            (float)group.Sum(x => (decimal)x.Quantity * x.Product!.Price)))
+        .ToList();
+
+    if (revenues.Count == 0)
+    {
+        return Results.BadRequest(new { message = "Dados insuficientes para gerar previsao de faturamento." });
+    }
+
+    var resultado = await demandForecastService
+        .ForecastFromSeriesAsync(revenues, horizonDays, cancellationToken);
+
+    if (resultado is null)
+    {
+        return Results.BadRequest(new { message = "Dados insuficientes para gerar previsao de faturamento." });
+    }
+
+    return Results.Ok(resultado);
+});
+
+reports.MapPost("/revenue-forecast", async (
+    ForecastRequest request,
+    IDemandForecastService demandForecastService,
+    CancellationToken cancellationToken) =>
+{
+    var horizonDays = request.HorizonDays <= 0 ? 7 : request.HorizonDays;
+
+    if (horizonDays <= 0 || horizonDays > 30)
+    {
+        return Results.BadRequest(new { message = "O numero de dias deve estar entre 1 e 30." });
+    }
+
+    if (request.Points.Count == 0)
+    {
+        return Results.BadRequest(new { message = "Informe dados para gerar previsao." });
+    }
+
+    var resultado = await demandForecastService
+        .ForecastFromSeriesAsync(request.Points, horizonDays, cancellationToken);
+
+    if (resultado is null)
+    {
+        return Results.BadRequest(new { message = "Dados insuficientes para gerar previsao de faturamento." });
+    }
+
+    return Results.Ok(resultado);
 });
 
 app.Run();

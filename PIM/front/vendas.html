@@ -57,7 +57,41 @@
 </div>
 
   <div class="content">
-    <h1>Vendas</h1>
+    <div class="page-header">
+      <div>
+        <h1>Vendas</h1>
+        <p class="page-subtitle">Registre vendas e acompanhe o desempenho diário.</p>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="material-icons kpi-icon">receipt_long</span>
+        <div>
+          <span class="kpi-label">Vendas registradas</span>
+          <div class="kpi-value" id="resumoTotalVendas">0</div>
+          <span class="kpi-meta">transações</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <span class="material-icons kpi-icon">payments</span>
+        <div>
+          <span class="kpi-label">Receita total</span>
+          <div class="kpi-value" id="resumoReceita">R$ 0,00</div>
+          <span class="kpi-meta">faturamento</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <span class="material-icons kpi-icon">insights</span>
+        <div>
+          <span class="kpi-label">Ticket médio</span>
+          <div class="kpi-value" id="resumoTicket">R$ 0,00</div>
+          <span class="kpi-meta">por venda</span>
+        </div>
+      </div>
+    </div>
 
   <div class="venda-form">
   <select id="produto"></select>

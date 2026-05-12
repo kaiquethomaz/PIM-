@@ -1,31 +1,14 @@
-/*Pronto*/
-let produtos = JSON.parse(localStorage.getItem("produtos")) || [
-  {
-    nome: "Café",
-    categoria: "Alimentos",
-    codigo: "001",
-    valor: "18.00",
-    quantidade: 20
-  },
-  {
-    nome: "Arroz",
-    categoria: "Alimentos",
-    codigo: "002",
-    valor: "28.00",
-    quantidade: 8
-  },
-  {
-    nome: "Detergente",
-    categoria: "Limpeza",
-    codigo: "003",
-    valor: "3.50",
-    quantidade: 3
-  }
-];
-
+let produtos = [];
 
 const perfil = localStorage.getItem("perfilUsuario");
-localStorage.setItem("produtos", JSON.stringify(produtos));
+
+function limparSessao() {
+  localStorage.removeItem("perfilUsuario");
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("authExpiresAtUtc");
+  localStorage.removeItem("usuarioNome");
+  localStorage.removeItem("usuarioEmail");
+}
 
 function statusProduto(qtd) {
   if (qtd <= 5) return "baixo";
@@ -33,36 +16,97 @@ function statusProduto(qtd) {
   return "ok";
 }
 
+function formatarMoeda(valor) {
+  return valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
+}
+
+async function carregarProdutos() {
+  const resposta = await apiFetch("/api/products");
+
+  if (resposta.status === 401 || resposta.status === 403) {
+    limparSessao();
+    window.location.href = "login.html";
+    return [];
+  }
+
+  if (!resposta.ok) {
+    throw new Error("Falha ao carregar produtos.");
+  }
+
+  return await resposta.json();
+}
+
 function renderizarEstoque(lista) {
   const tabela = document.getElementById("tabelaEstoque");
   tabela.innerHTML = "";
 
-  lista.forEach((produto, index) => {
-    const status = statusProduto(Number(produto.quantidade));
+  if (lista.length === 0) {
+    tabela.innerHTML = `
+      <tr>
+        <td colspan="6">Nenhum produto encontrado.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  lista.forEach(produto => {
+    const status = statusProduto(Number(produto.quantity));
 
     tabela.innerHTML += `
       <tr>
-        <td>${produto.nome}</td>
-        <td>${produto.categoria}</td>
-        <td>${produto.codigo}</td>
-        <td>R$ ${produto.valor}</td>
+        <td>${produto.name}</td>
+        <td>${produto.category}</td>
+        <td>#${produto.id}</td>
+        <td>${formatarMoeda(Number(produto.price))}</td>
         <td><span class="status ${status}"></span></td>
-       <td class="acoes">
-  ${perfil !== "funcionario" ? `
-    <span class="material-icons" onclick="editarProduto(${index})">edit</span>
-    <span class="material-icons" onclick="excluirProduto(${index})">delete</span>
-  ` : `
-    <span class="sem-permissao">Sem permissão</span>
-  `}
-</td>
+        <td class="acoes">
+          ${perfil !== "funcionario" ? `
+            <span class="material-icons" onclick="editarProduto(${produto.id})">edit</span>
+            <span class="material-icons" onclick="excluirProduto(${produto.id})">delete</span>
+          ` : `
+            <span class="sem-permissao">Sem permissão</span>
+          `}
+        </td>
       </tr>
     `;
   });
 }
 
+function atualizarResumoEstoque() {
+  const totalProdutos = produtos.length;
+  const totalItens = produtos.reduce((total, produto) => {
+    return total + Number(produto.quantity || 0);
+  }, 0);
+
+  const baixoEstoque = produtos.filter(produto => {
+    return statusProduto(Number(produto.quantity)) === "baixo";
+  }).length;
+
+  const totalProdutosEl = document.getElementById("resumoProdutos");
+  const totalItensEl = document.getElementById("resumoItens");
+  const baixoEl = document.getElementById("resumoBaixo");
+
+  if (totalProdutosEl) {
+    totalProdutosEl.innerText = totalProdutos.toLocaleString("pt-BR");
+  }
+
+  if (totalItensEl) {
+    totalItensEl.innerText = totalItens.toLocaleString("pt-BR");
+  }
+
+  if (baixoEl) {
+    baixoEl.innerText = baixoEstoque.toLocaleString("pt-BR");
+  }
+}
+
 function carregarCategorias() {
   const select = document.getElementById("filtroCategoria");
-  const categorias = [...new Set(produtos.map(p => p.categoria))];
+  select.innerHTML = `<option value="">Categoria</option>`;
+
+  const categorias = [...new Set(produtos.map(p => p.category))];
 
   categorias.forEach(cat => {
     select.innerHTML += `<option value="${cat}">${cat}</option>`;
@@ -75,33 +119,51 @@ function filtrarEstoque() {
   const status = document.getElementById("filtroStatus").value;
 
   const filtrados = produtos.filter(p => {
-    const nomeOk = p.nome.toLowerCase().includes(busca);
-    const categoriaOk = categoria === "" || p.categoria === categoria;
-    const statusOk = status === "" || statusProduto(Number(p.quantidade)) === status;
+    const nomeOk = p.name.toLowerCase().includes(busca);
+    const categoriaOk = categoria === "" || p.category === categoria;
+    const statusOk = status === "" || statusProduto(Number(p.quantity)) === status;
 
     return nomeOk && categoriaOk && statusOk;
   });
 
   renderizarEstoque(filtrados);
+  atualizarResumoEstoque();
 }
 
-function editarProduto(index) {
-  localStorage.setItem("produtoEditando", index);
-
-  window.location.href = "cadastro-produto.html";
+function editarProduto(id) {
+  window.location.href = `cadastro-produto.html?id=${id}`;
 }
 
-function excluirProduto(index) {
-  produtos.splice(index, 1);
-  localStorage.setItem("produtos", JSON.stringify(produtos));
-  renderizarEstoque(produtos);
+async function excluirProduto(id) {
+  const resposta = await apiFetch(`/api/products/${id}`, { method: "DELETE" });
+
+  if (resposta.status === 401 || resposta.status === 403) {
+    limparSessao();
+    window.location.href = "login.html";
+    return;
+  }
+
+  if (!resposta.ok) {
+    return;
+  }
+
+  await carregarDados();
 }
 
-
+async function carregarDados() {
+  try {
+    produtos = await carregarProdutos();
+    renderizarEstoque(produtos);
+    carregarCategorias();
+    atualizarResumoEstoque();
+  } catch (error) {
+    renderizarEstoque([]);
+    atualizarResumoEstoque();
+  }
+}
 
 if (perfil === "funcionario") {
   document.getElementById("btnCadastrarProduto").style.display = "none";
 }
 
-renderizarEstoque(produtos);
-carregarCategorias();
+carregarDados();

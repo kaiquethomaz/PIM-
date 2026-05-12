@@ -57,7 +57,41 @@
 </div>
 
   <div class="content">
-    <h1>Estoque</h1>
+    <div class="page-header">
+      <div>
+        <h1>Estoque</h1>
+        <p class="page-subtitle">Visão completa dos níveis e categorias.</p>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="material-icons kpi-icon">inventory_2</span>
+        <div>
+          <span class="kpi-label">Produtos cadastrados</span>
+          <div class="kpi-value" id="resumoProdutos">0</div>
+          <span class="kpi-meta">itens únicos</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <span class="material-icons kpi-icon">apps</span>
+        <div>
+          <span class="kpi-label">Itens em estoque</span>
+          <div class="kpi-value" id="resumoItens">0</div>
+          <span class="kpi-meta">quantidade total</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <span class="material-icons kpi-icon">warning</span>
+        <div>
+          <span class="kpi-label">Baixo estoque</span>
+          <div class="kpi-value" id="resumoBaixo">0</div>
+          <span class="kpi-meta">atenção imediata</span>
+        </div>
+      </div>
+    </div>
 
     <div class="topo-tabela">
       <input type="text" id="busca" placeholder="Buscar produto..." onkeyup="filtrarEstoque()">
@@ -75,7 +109,7 @@
         </select>
       </div>
 
-      <button onclick="ir('cadastro-produto.html')" class="btn-novo"  somente-admin-gerente id="btnCadastrarProduto">
+      <button onclick="ir('cadastro-produto.html')" class="btn-novo" somente-admin-gerente id="btnCadastrarProduto">
   Cadastrar Produto
 </button>
     </div>

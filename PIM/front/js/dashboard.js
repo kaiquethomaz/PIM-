@@ -6,13 +6,21 @@ const meses = [
 let movimentos = [];
 let graficoEntradaSaida = null;
 let graficoMaisVendidos = null;
+let graficoDemanda = null;
+let graficoVendasPrev = null;
+let graficoFaturamentoPrev = null;
+
+const formatadorMoeda = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL"
+});
 
 function isEntrada(tipo) {
-  return tipo === 1 || tipo === "Entry";
+  return tipo === 1 || tipo === "Entry" || tipo === "entrada";
 }
 
 function isSaida(tipo) {
-  return tipo === 2 || tipo === "Exit";
+  return tipo === 2 || tipo === "Exit" || tipo === "saida";
 }
 
 function limparSessao() {
@@ -55,6 +63,36 @@ async function carregarMaisVendidos() {
   return await resposta.json();
 }
 
+async function carregarPrevisaoApi(endpoint) {
+  const resposta = await apiFetch(endpoint);
+
+  if (resposta.status === 401 || resposta.status === 403) {
+    limparSessao();
+    window.location.href = "login.html";
+    return null;
+  }
+
+  if (!resposta.ok) {
+    const erro = await resposta.json().catch(() => null);
+    const mensagem = erro?.message || "Falha ao carregar previsão.";
+    throw new Error(mensagem);
+  }
+
+  return await resposta.json();
+}
+
+async function carregarPrevisaoDemanda() {
+  return await carregarPrevisaoApi("/api/reports/demand-forecast?days=7");
+}
+
+async function carregarPrevisaoVendas() {
+  return await carregarPrevisaoApi("/api/reports/sales-forecast?days=7");
+}
+
+async function carregarPrevisaoFaturamento() {
+  return await carregarPrevisaoApi("/api/reports/revenue-forecast?days=7");
+}
+
 function atualizarGraficoMaisVendidos(dados) {
   const nomesProdutos = dados.map(item => item.product);
   const qtdVendidos = dados.map(item => item.totalSold);
@@ -90,6 +128,206 @@ function atualizarGraficoMaisVendidos(dados) {
   graficoMaisVendidos.data.labels = nomesProdutos;
   graficoMaisVendidos.data.datasets[0].data = qtdVendidos;
   graficoMaisVendidos.update();
+}
+
+function atualizarGraficoDemanda(dados) {
+  const pontos = dados?.points || [];
+  const labels = pontos.map(item => {
+    const data = new Date(item.dateUtc);
+    return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  });
+  const valores = pontos.map(item => item.forecast);
+
+  const ctx = document.getElementById("graficoDemanda");
+  if (!ctx) {
+    return;
+  }
+
+  if (!graficoDemanda) {
+    graficoDemanda = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Demanda prevista",
+          data: valores,
+          borderColor: "#2563eb",
+          backgroundColor: "rgba(37, 99, 235, 0.15)",
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+    return;
+  }
+
+  graficoDemanda.data.labels = labels;
+  graficoDemanda.data.datasets[0].data = valores;
+  graficoDemanda.update();
+}
+
+function atualizarGraficoPrevisaoVendas(dados) {
+  const pontos = dados?.points || [];
+  const labels = pontos.map(item => {
+    const data = new Date(item.dateUtc);
+    return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  });
+  const valores = pontos.map(item => item.forecast);
+
+  const ctx = document.getElementById("graficoVendasPrev");
+  if (!ctx) {
+    return;
+  }
+
+  if (!graficoVendasPrev) {
+    graficoVendasPrev = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Vendas previstas",
+          data: valores,
+          borderColor: "#16a34a",
+          backgroundColor: "rgba(22, 163, 74, 0.12)",
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+    return;
+  }
+
+  graficoVendasPrev.data.labels = labels;
+  graficoVendasPrev.data.datasets[0].data = valores;
+  graficoVendasPrev.update();
+}
+
+function atualizarGraficoPrevisaoFaturamento(dados) {
+  const pontos = dados?.points || [];
+  const labels = pontos.map(item => {
+    const data = new Date(item.dateUtc);
+    return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  });
+  const valores = pontos.map(item => item.forecast);
+
+  const ctx = document.getElementById("graficoFaturamentoPrev");
+  if (!ctx) {
+    return;
+  }
+
+  if (!graficoFaturamentoPrev) {
+    graficoFaturamentoPrev = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Faturamento previsto",
+          data: valores,
+          borderColor: "#f59e0b",
+          backgroundColor: "rgba(245, 158, 11, 0.12)",
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => formatadorMoeda.format(value)
+            }
+          }
+        }
+      }
+    });
+    return;
+  }
+
+  graficoFaturamentoPrev.data.labels = labels;
+  graficoFaturamentoPrev.data.datasets[0].data = valores;
+  graficoFaturamentoPrev.update();
+}
+
+function atualizarResumoDashboard(movimentosLista, maisVendidosLista) {
+  const entradas = movimentosLista.reduce((total, mov) => {
+    if (isEntrada(mov.type)) {
+      return total + Number(mov.quantity || 0);
+    }
+    return total;
+  }, 0);
+
+  const saidas = movimentosLista.reduce((total, mov) => {
+    if (isSaida(mov.type)) {
+      return total + Number(mov.quantity || 0);
+    }
+    return total;
+  }, 0);
+
+  const saldo = entradas - saidas;
+  const top = maisVendidosLista && maisVendidosLista.length > 0
+    ? maisVendidosLista[0]
+    : null;
+
+  const entradasEl = document.getElementById("resumoEntradas");
+  const saidasEl = document.getElementById("resumoSaidas");
+  const saldoEl = document.getElementById("resumoSaldo");
+  const topEl = document.getElementById("resumoTopProduto");
+  const topQtdEl = document.getElementById("resumoTopQtd");
+
+  if (entradasEl) {
+    entradasEl.innerText = entradas.toLocaleString("pt-BR");
+  }
+
+  if (saidasEl) {
+    saidasEl.innerText = saidas.toLocaleString("pt-BR");
+  }
+
+  if (saldoEl) {
+    saldoEl.innerText = saldo.toLocaleString("pt-BR");
+  }
+
+  if (topEl) {
+    topEl.innerText = top ? top.product : "-";
+  }
+
+  if (topQtdEl) {
+    topQtdEl.innerText = top ? `${top.totalSold} itens` : "0 itens";
+  }
 }
 
 function obterPeriodo() {
@@ -241,7 +479,11 @@ function filtrarDashboard() {
 
 async function iniciarDashboard() {
   const erro = document.getElementById("erroDashboard");
+  const erroForecast = document.getElementById("erroForecast");
   erro.innerText = "";
+  if (erroForecast) {
+    erroForecast.innerText = "";
+  }
 
   try {
     const [movimentosApi, maisVendidosApi] = await Promise.all([
@@ -250,10 +492,46 @@ async function iniciarDashboard() {
     ]);
 
     movimentos = movimentosApi || [];
-    atualizarGraficoMaisVendidos(maisVendidosApi || []);
+    const maisVendidos = maisVendidosApi || [];
+
+    atualizarGraficoMaisVendidos(maisVendidos);
     atualizarGraficoEntradaSaida();
+    atualizarResumoDashboard(movimentos, maisVendidos);
   } catch (error) {
     erro.innerText = "Não foi possível carregar os dados do dashboard.";
+  }
+
+  const errosForecast = [];
+
+  try {
+    const previsaoApi = await carregarPrevisaoDemanda();
+    if (previsaoApi) {
+      atualizarGraficoDemanda(previsaoApi);
+    }
+  } catch (error) {
+    errosForecast.push(error.message);
+  }
+
+  try {
+    const previsaoVendas = await carregarPrevisaoVendas();
+    if (previsaoVendas) {
+      atualizarGraficoPrevisaoVendas(previsaoVendas);
+    }
+  } catch (error) {
+    errosForecast.push(error.message);
+  }
+
+  try {
+    const previsaoFaturamento = await carregarPrevisaoFaturamento();
+    if (previsaoFaturamento) {
+      atualizarGraficoPrevisaoFaturamento(previsaoFaturamento);
+    }
+  } catch (error) {
+    errosForecast.push(error.message);
+  }
+
+  if (erroForecast && errosForecast.length > 0) {
+    erroForecast.innerText = errosForecast.join(" ");
   }
 }
 
