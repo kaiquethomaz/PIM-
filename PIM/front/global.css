@@ -398,16 +398,29 @@ body {
 .login-input-wrap input,
 .login-input-wrap select {
   width: 100%;
+  flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   background: transparent;
   color: var(--gray-950);
   font-size: 14px;
   font-family: inherit;
+  line-height: 1.4;
+  margin: 0;
+  padding: 0;
+  display: block;
 }
 
 .login-input-wrap input::placeholder {
   color: var(--gray-500);
+}
+
+.login-input-wrap select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
 }
 
 .login-actions {
