@@ -21,19 +21,6 @@ function definirMensagem(texto, tipo = "erro") {
   mensagem.style.color = tipo === "sucesso" ? "#15803d" : "#c62828";
 }
 
-function formatarDataHora(dataIso) {
-  if (!dataIso) {
-    return "Nao informado";
-  }
-
-  const data = new Date(dataIso);
-  if (Number.isNaN(data.getTime())) {
-    return "Nao informado";
-  }
-
-  return data.toLocaleString("pt-BR");
-}
-
 function carregarEmpresaLocal() {
   const dados = localStorage.getItem("empresaCadastrada");
 
@@ -67,11 +54,6 @@ function preencherFormularioEmpresa() {
 
 function preencherResumoSessao() {
   const perfil = localStorage.getItem("perfilUsuario") || "admin";
-  const usuarioNome = localStorage.getItem("usuarioNome") || "Nao identificado";
-  const usuarioEmail = localStorage.getItem("usuarioEmail") || "Nao informado";
-  const apiBase = localStorage.getItem("apiBase") || "http://localhost:5000";
-  const tokenExpiraEm = localStorage.getItem("authExpiresAtUtc");
-
   const perfilFormatado = perfil === "admin"
     ? "Administrador"
     : perfil === "funcionario"
@@ -79,44 +61,29 @@ function preencherResumoSessao() {
       : perfil;
 
   definirTexto("resumoPerfil", perfilFormatado);
-  definirTexto("infoUsuarioAtual", usuarioNome);
-  definirTexto("infoEmailUsuario", usuarioEmail);
-  definirTexto("infoApiBase", apiBase);
-  definirTexto("infoExpiracaoToken", formatarDataHora(tokenExpiraEm));
 }
 
 async function carregarResumoOperacional() {
   try {
-    const requisicoes = [
-      apiFetch("/api/products"),
-      apiFetch("/api/movements"),
-      apiFetch("/api/users")
-    ];
+    const requisicoes = [apiFetch("/api/users")];
 
-    const [produtosResponse, movimentosResponse, usuariosResponse] = await Promise.all(requisicoes);
+    const [usuariosResponse] = await Promise.all(requisicoes);
 
-    if (produtosResponse.status === 401 || produtosResponse.status === 403) {
+    if (usuariosResponse.status === 401 || usuariosResponse.status === 403) {
       logout();
       return;
     }
-
-    const produtos = produtosResponse.ok ? await produtosResponse.json() : [];
-    const movimentos = movimentosResponse.ok ? await movimentosResponse.json() : [];
 
     let usuarios = [];
     if (usuariosResponse.ok) {
       usuarios = await usuariosResponse.json();
     }
 
-    definirTexto("resumoProdutosConfig", String(produtos.length));
-    definirTexto("resumoMovimentosConfig", String(movimentos.length));
     definirTexto("resumoUsuariosConfig", String(usuarios.length));
     definirTexto("resumoStatusApi", "API conectada");
   } catch {
     definirTexto("resumoStatusApi", "Conexao instavel");
     definirMensagem("Nao foi possivel atualizar os indicadores do ambiente.");
-    definirTexto("resumoProdutosConfig", "-");
-    definirTexto("resumoMovimentosConfig", "-");
     definirTexto("resumoUsuariosConfig", "-");
   }
 }
