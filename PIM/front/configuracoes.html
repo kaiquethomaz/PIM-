@@ -54,47 +54,200 @@
     <div class="page-header">
       <div>
         <h1>Configurações</h1>
-        <p class="page-subtitle">Ajuste dados da empresa e preferências do sistema.</p>
+        <p class="page-subtitle">Gerencie dados da empresa, acesso e manutenção do ambiente.</p>
       </div>
     </div>
 
+    <section class="config-hero">
+      <div class="config-hero-copy">
+        <span class="config-eyebrow">Painel administrativo</span>
+        <h2>Central de gestão do sistema</h2>
+        <p>
+          Consulte informações da operação, atualize os dados visíveis da empresa
+          e mantenha o ambiente organizado com ações rápidas.
+        </p>
+      </div>
+
+      <div class="config-hero-status">
+        <div class="config-status-badge">
+          <span class="material-icons">verified</span>
+          <div>
+            <strong id="resumoStatusApi">Sincronizando...</strong>
+            <span>Conectividade com a API</span>
+          </div>
+        </div>
+
+        <div class="config-status-badge">
+          <span class="material-icons">shield</span>
+          <div>
+            <strong id="resumoPerfil">Administrador</strong>
+            <span>Perfil autenticado</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="config-summary-grid">
+      <article class="config-summary-card">
+        <span class="material-icons config-summary-icon">inventory_2</span>
+        <div>
+          <span class="config-summary-label">Produtos cadastrados</span>
+          <strong class="config-summary-value" id="resumoProdutosConfig">0</strong>
+        </div>
+      </article>
+
+      <article class="config-summary-card">
+        <span class="material-icons config-summary-icon">point_of_sale</span>
+        <div>
+          <span class="config-summary-label">Movimentações registradas</span>
+          <strong class="config-summary-value" id="resumoMovimentosConfig">0</strong>
+        </div>
+      </article>
+
+      <article class="config-summary-card somente-admin">
+        <span class="material-icons config-summary-icon">group</span>
+        <div>
+          <span class="config-summary-label">Usuários com acesso</span>
+          <strong class="config-summary-value" id="resumoUsuariosConfig">0</strong>
+        </div>
+      </article>
+    </section>
+
+    <p id="mensagemConfiguracoes" class="config-feedback"></p>
+
     <div class="config-grid">
 
-      <div class="config-card">
-        <h3><span class="material-icons">business</span> Dados da Empresa</h3>
+      <section class="config-card config-card-featured">
+        <div class="config-card-header">
+          <div class="config-card-icon">
+            <span class="material-icons">business</span>
+          </div>
+          <div>
+            <h3>Dados da empresa</h3>
+            <p class="config-card-subtitle">Informações institucionais exibidas na interface.</p>
+          </div>
+        </div>
 
-        <p><strong>Empresa:</strong></p>
-        <input type="text" id="empresa">
+        <div class="config-field-grid">
+          <label class="config-field">
+            <span>Nome da empresa</span>
+            <input type="text" id="empresa" placeholder="Informe o nome da empresa">
+          </label>
 
-        <p><strong>E-mail:</strong></p>
-        <input type="email" id="emailEmpresa">
+          <label class="config-field">
+            <span>E-mail principal</span>
+            <input type="email" id="emailEmpresa" placeholder="empresa@dominio.com">
+          </label>
+        </div>
 
-        <button onclick="salvarEmpresa()">
-          Salvar Alterações
+        <div class="config-inline-info">
+          <div class="config-info-chip">
+            <span class="material-icons">storefront</span>
+            <div>
+              <strong id="infoNomeComercio">NexaFlow</strong>
+              <span>Nome exibido no menu lateral</span>
+            </div>
+          </div>
+
+          <div class="config-info-chip">
+            <span class="material-icons">mail</span>
+            <div>
+              <strong id="infoEmailEmpresa">-</strong>
+              <span>Contato principal cadastrado</span>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="salvarEmpresa()" class="config-btn-primary">
+          Salvar alterações
         </button>
-      </div>
+      </section>
 
+      <section class="config-card">
+        <div class="config-card-header">
+          <div class="config-card-icon config-card-icon-muted">
+            <span class="material-icons">monitoring</span>
+          </div>
+          <div>
+            <h3>Ambiente atual</h3>
+            <p class="config-card-subtitle">Visão rápida sobre acesso, conexão e base operacional.</p>
+          </div>
+        </div>
 
+        <div class="config-info-list">
+          <div class="config-info-row">
+            <span class="config-info-label">Usuário conectado</span>
+            <strong id="infoUsuarioAtual">-</strong>
+          </div>
 
-      <div class="config-card">
-        <h3><span class="material-icons">tune</span> Sistema</h3>
+          <div class="config-info-row">
+            <span class="config-info-label">E-mail do acesso</span>
+            <strong id="infoEmailUsuario">-</strong>
+          </div>
 
-        <button onclick="limparVendas()">
-          Limpar vendas
-        </button>
+          <div class="config-info-row">
+            <span class="config-info-label">API base</span>
+            <strong id="infoApiBase">-</strong>
+          </div>
 
-        <button onclick="limparEstoque()">
-          Limpar estoque
-        </button>
-      </div>
+          <div class="config-info-row">
+            <span class="config-info-label">Último vencimento do token</span>
+            <strong id="infoExpiracaoToken">-</strong>
+          </div>
+        </div>
+      </section>
 
-      <div class="config-card somente-admin">
-        <h3><span class="material-icons">group</span> Usuários</h3>
+      <section class="config-card">
+        <div class="config-card-header">
+          <div class="config-card-icon config-card-icon-warning">
+            <span class="material-icons">build</span>
+          </div>
+          <div>
+            <h3>Manutenção local</h3>
+            <p class="config-card-subtitle">Ações de limpeza de dados salvos no navegador.</p>
+          </div>
+        </div>
 
-        <button onclick="ir('cadastro-usuario.html')">
-          Cadastrar usuário
-        </button>
-      </div>
+        <div class="config-action-list">
+          <div class="config-action-item">
+            <div>
+              <strong>Limpar cache de vendas local</strong>
+              <p>Remove registros antigos salvos localmente por versões anteriores da interface.</p>
+            </div>
+            <button onclick="limparVendas()" class="config-btn-secondary">Limpar vendas</button>
+          </div>
+
+          <div class="config-action-item">
+            <div>
+              <strong>Limpar cache de estoque local</strong>
+              <p>Remove dados locais legados de produtos sem impactar os dados oficiais da API.</p>
+            </div>
+            <button onclick="limparEstoque()" class="config-btn-secondary">Limpar estoque</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="config-card somente-admin">
+        <div class="config-card-header">
+          <div class="config-card-icon config-card-icon-success">
+            <span class="material-icons">group</span>
+          </div>
+          <div>
+            <h3>Acesso e equipe</h3>
+            <p class="config-card-subtitle">Gerencie quem pode operar o sistema.</p>
+          </div>
+        </div>
+
+        <div class="config-action-list">
+          <div class="config-action-item">
+            <div>
+              <strong>Cadastrar novo usuário</strong>
+              <p>Crie contas administrativas adicionais para operação e suporte interno.</p>
+            </div>
+            <button onclick="ir('cadastro-usuario.html')" class="config-btn-primary">Abrir cadastro</button>
+          </div>
+        </div>
+      </section>
 
     </div>
   </div>
