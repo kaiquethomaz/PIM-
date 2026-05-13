@@ -167,7 +167,7 @@ body {
 }
 
 .login-logo {
-  color: var(--surface);
+  color: var(--blue-700);
   z-index: 2;
 }
 
@@ -182,6 +182,40 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.login-brand-mark {
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: white;
+  font-size: 24px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.login-brand strong {
+  display: block;
+  font-size: 20px;
+  line-height: 1.1;
+  margin-bottom: 3px;
+}
+
+.login-brand span:last-child {
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 13px;
 }
 
 .login-badge {
@@ -280,7 +314,16 @@ body {
   background: linear-gradient(135deg, var(--blue-700), var(--blue-500));
   color: white;
   box-shadow: var(--shadow-sm);
-  font-size: 28px;
+}
+
+.login-header-icon .material-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 26px;
+  line-height: 1;
 }
 
 .login-eyebrow {
@@ -1624,6 +1667,10 @@ canvas {
 
   .login-hero-panel {
     padding: 36px 24px;
+  }
+
+  .login-brand {
+    margin-bottom: 22px;
   }
 
   .login-hero-panel h1 {
