@@ -37,6 +37,36 @@ function formatarPerfilUsuario(role) {
   return "Usuário";
 }
 
+async function executarLimpeza(endpoint, mensagemConfirmacao) {
+  const confirmou = window.confirm(mensagemConfirmacao);
+  if (!confirmou) {
+    return false;
+  }
+
+  try {
+    const resposta = await apiFetch(endpoint, { method: "DELETE" });
+
+    if (resposta.status === 401 || resposta.status === 403) {
+      definirMensagem("Apenas administradores podem executar esta ação.");
+      return false;
+    }
+
+    const payload = await resposta.json().catch(() => null);
+
+    if (!resposta.ok) {
+      definirMensagem(payload?.message || "Não foi possível concluir a limpeza.");
+      return false;
+    }
+
+    definirMensagem(payload?.message || "Limpeza concluída com sucesso.", "sucesso");
+    await carregarResumoOperacional();
+    return true;
+  } catch {
+    definirMensagem("Falha ao conectar com o servidor para concluir a limpeza.");
+    return false;
+  }
+}
+
 function renderizarUsuariosComAcesso(usuarios) {
   const container = obterElemento("listaUsuariosConfig");
   if (!container) {
@@ -152,13 +182,17 @@ function salvarEmpresa() {
 }
 
 function limparVendas() {
-  localStorage.removeItem("vendas");
-  definirMensagem("Cache local de vendas removido.", "sucesso");
+  executarLimpeza(
+    "/api/maintenance/sales",
+    "Aviso: esta ação vai apagar todas as vendas registradas e restaurar as quantidades vendidas ao estoque. Deseja continuar?"
+  );
 }
 
 function limparEstoque() {
-  localStorage.removeItem("produtos");
-  definirMensagem("Cache local de estoque removido.", "sucesso");
+  executarLimpeza(
+    "/api/maintenance/inventory",
+    "Aviso: esta ação vai apagar todos os produtos e movimentações do estoque. Você perderá esses dados. Deseja continuar?"
+  );
 }
 
 preencherFormularioEmpresa();

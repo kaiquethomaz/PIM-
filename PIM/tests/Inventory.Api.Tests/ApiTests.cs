@@ -55,6 +55,52 @@ public class ApiTests(CustomWebApplicationFactory factory) : IClassFixture<Custo
     }
 
     [Fact]
+    public async Task Admin_Can_Clear_Sales_And_Restore_Stock()
+    {
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await LoginAsync(client, "employee@test.com", "Employee@123"));
+
+        var saleResponse = await client.PostAsJsonAsync("/api/movements", new CreateMovementRequest(1, MovementType.Exit, 2));
+        saleResponse.EnsureSuccessStatusCode();
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await LoginAsync(client, "admin@test.com", "Admin@123"));
+
+        var clearResponse = await client.DeleteAsync("/api/maintenance/sales");
+        clearResponse.EnsureSuccessStatusCode();
+
+        var products = await client.GetFromJsonAsync<List<ProductResponse>>("/api/products");
+        var movements = await client.GetFromJsonAsync<List<MovementResponse>>("/api/movements");
+
+        Assert.NotNull(products);
+        Assert.NotNull(movements);
+        Assert.Equal(10, products!.Single(x => x.Id == 1).Quantity);
+        Assert.Empty(movements!);
+    }
+
+    [Fact]
+    public async Task Admin_Can_Clear_Inventory()
+    {
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await LoginAsync(client, "employee@test.com", "Employee@123"));
+
+        var movementResponse = await client.PostAsJsonAsync("/api/movements", new CreateMovementRequest(1, MovementType.Entry, 1));
+        movementResponse.EnsureSuccessStatusCode();
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await LoginAsync(client, "admin@test.com", "Admin@123"));
+
+        var clearResponse = await client.DeleteAsync("/api/maintenance/inventory");
+        clearResponse.EnsureSuccessStatusCode();
+
+        var products = await client.GetFromJsonAsync<List<ProductResponse>>("/api/products");
+        var movements = await client.GetFromJsonAsync<List<MovementResponse>>("/api/movements");
+
+        Assert.NotNull(products);
+        Assert.NotNull(movements);
+        Assert.Empty(products!);
+        Assert.Empty(movements!);
+    }
+
+    [Fact]
     public async Task Employee_Cannot_Access_Manager_Report()
     {
         var client = factory.CreateClient();

@@ -525,6 +525,59 @@ movements.MapGet("/", async (AppDbContext dbContext, CancellationToken cancellat
     return Results.Ok(data.Select(ToMovementResponse));
 });
 
+var maintenance = app.MapGroup("/api/maintenance").RequireAuthorization("AdminOnly");
+
+maintenance.MapDelete("/sales", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var sales = await dbContext.StockMovements
+        .Where(x => x.Type == MovementType.Exit)
+        .Include(x => x.Product)
+        .ToListAsync(cancellationToken);
+
+    if (sales.Count == 0)
+    {
+        return Results.Ok(new { message = "Nenhuma venda encontrada para limpeza." });
+    }
+
+    foreach (var sale in sales)
+    {
+        if (sale.Product is not null)
+        {
+            sale.Product.Quantity += sale.Quantity;
+        }
+    }
+
+    dbContext.StockMovements.RemoveRange(sales);
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    return Results.Ok(new { message = "Vendas removidas com sucesso." });
+});
+
+maintenance.MapDelete("/inventory", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
+{
+    var movements = await dbContext.StockMovements.ToListAsync(cancellationToken);
+    var products = await dbContext.Products.ToListAsync(cancellationToken);
+
+    if (movements.Count == 0 && products.Count == 0)
+    {
+        return Results.Ok(new { message = "Nenhum item de estoque encontrado para limpeza." });
+    }
+
+    if (movements.Count > 0)
+    {
+        dbContext.StockMovements.RemoveRange(movements);
+    }
+
+    if (products.Count > 0)
+    {
+        dbContext.Products.RemoveRange(products);
+    }
+
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    return Results.Ok(new { message = "Estoque removido com sucesso." });
+});
+
 var reports = app.MapGroup("/api/reports").RequireAuthorization("ManagerOrAdmin");
 
 reports.MapGet("/stock", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
