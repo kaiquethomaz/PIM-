@@ -381,6 +381,7 @@ body {
   gap: 12px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  position: relative;
 }
 
 .login-input-wrap:focus-within {
@@ -410,6 +411,7 @@ body {
   margin: 0;
   padding: 0;
   display: block;
+  height: 100%;
 }
 
 .login-input-wrap input::placeholder {
@@ -421,6 +423,37 @@ body {
   -webkit-appearance: none;
   -moz-appearance: none;
   cursor: pointer;
+  padding-right: 34px;
+}
+
+.login-select-wrap {
+  justify-content: space-between;
+}
+
+.login-select-arrow {
+  font-size: 20px;
+  color: var(--blue-700);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.login-password-toggle {
+  border: none;
+  background: transparent;
+  color: var(--blue-700);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.login-password-toggle .material-icons {
+  font-size: 20px;
+  line-height: 1;
 }
 
 .login-actions {

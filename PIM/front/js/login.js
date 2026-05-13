@@ -76,4 +76,17 @@ async function login() {
     erro.innerText = "Falha ao conectar com o servidor.";
   }
 }
+
+function togglePasswordVisibility() {
+  const senhaInput = document.getElementById("senha");
+  const iconeSenha = document.getElementById("iconeSenha");
+
+  if (!senhaInput || !iconeSenha) {
+    return;
+  }
+
+  const exibindoSenha = senhaInput.type === "text";
+  senhaInput.type = exibindoSenha ? "password" : "text";
+  iconeSenha.innerText = exibindoSenha ? "visibility" : "visibility_off";
+}
 /*pronto*/

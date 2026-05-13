@@ -74,18 +74,22 @@
           <div class="login-input-wrap">
             <span class="material-icons">lock</span>
             <input type="password" id="senha" placeholder="Digite sua senha">
+            <button type="button" class="login-password-toggle" onclick="togglePasswordVisibility()" aria-label="Mostrar ou ocultar senha">
+              <span class="material-icons" id="iconeSenha">visibility</span>
+            </button>
           </div>
         </label>
 
         <label class="login-field">
           <span class="login-field-label">Perfil de acesso</span>
-          <div class="login-input-wrap">
+          <div class="login-input-wrap login-select-wrap">
             <span class="material-icons">badge</span>
             <select id="perfil">
               <option value="">Selecione o perfil</option>
               <option value="admin">Administrador</option>
               <option value="funcionario">Funcionário</option>
             </select>
+            <span class="material-icons login-select-arrow">expand_more</span>
           </div>
         </label>
 
