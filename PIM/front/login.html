@@ -10,43 +10,88 @@
 </head>
 <body>
 
-  <h1 class="logo">NexaFlow</h1>
+  <h1 class="logo login-logo">NexaFlow</h1>
 
-  <div class="login-container">
+  <div class="login-shell">
+    <section class="login-hero-panel">
+      <span class="login-badge">Acesso seguro</span>
+      <h1>Controle seu estoque com acesso rápido e organizado.</h1>
+      <p>
+        Entre com o perfil correto para registrar vendas, acompanhar o estoque
+        e manter a operação do estabelecimento em dia.
+      </p>
 
-    <h1>Acesso do Usuário</h1>
+      <div class="login-hero-points">
+        <div class="login-hero-point">
+          <span class="material-icons">inventory_2</span>
+          <div>
+            <strong>Estoque atualizado</strong>
+            <span>Movimentações centralizadas em um só lugar.</span>
+          </div>
+        </div>
 
-    <div class="campo">
-      <span class="material-icons">person</span>
-      <input type="email" id="email" placeholder="E-mail">
-    </div>
+        <div class="login-hero-point">
+          <span class="material-icons">shield</span>
+          <div>
+            <strong>Acesso por perfil</strong>
+            <span>Administrador e funcionário com permissões separadas.</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <div class="campo">
-      <span class="material-icons">lock</span>
-      <input type="password" id="senha" placeholder="Senha">
-    </div>
+    <section class="login-container">
+      <div class="login-header">
+        <span class="material-icons login-header-icon">lock_person</span>
+        <div>
+          <span class="login-eyebrow">Entrar no sistema</span>
+          <h2>Acesso do usuário</h2>
+          <p>Informe seus dados para continuar.</p>
+        </div>
+      </div>
 
-    <div class="campo">
-      <span class="material-icons">badge</span>
+      <div class="login-form">
+        <label class="login-field">
+          <span class="login-field-label">E-mail</span>
+          <div class="login-input-wrap">
+            <span class="material-icons">person</span>
+            <input type="email" id="email" placeholder="seuemail@empresa.com">
+          </div>
+        </label>
 
-      <select id="perfil">
-        <option value="">Selecione o perfil</option>
-        <option value="admin">Administrador</option>
-        <option value="funcionario">Funcionário</option>
-      </select>
-    </div>
+        <label class="login-field">
+          <span class="login-field-label">Senha</span>
+          <div class="login-input-wrap">
+            <span class="material-icons">lock</span>
+            <input type="password" id="senha" placeholder="Digite sua senha">
+          </div>
+        </label>
 
-   
-    <p class="esqueceu" onclick="window.location.href='index.html'">
-      Cadastrar Empresa
-    </p>
+        <label class="login-field">
+          <span class="login-field-label">Perfil de acesso</span>
+          <div class="login-input-wrap">
+            <span class="material-icons">badge</span>
+            <select id="perfil">
+              <option value="">Selecione o perfil</option>
+              <option value="admin">Administrador</option>
+              <option value="funcionario">Funcionário</option>
+            </select>
+          </div>
+        </label>
 
-    <p id="erro"></p>
+        <div class="login-actions">
+          <button onclick="login()" class="btn-principal login-submit">
+            Entrar
+          </button>
 
-    <button onclick="login()" class="btn-principal">
-      Entrar
-    </button>
+          <button onclick="window.location.href='index.html'" class="login-link-btn" type="button">
+            Cadastrar empresa
+          </button>
+        </div>
 
+        <p id="erro"></p>
+      </div>
+    </section>
   </div>
 
   <script src="js/global.js"></script>
