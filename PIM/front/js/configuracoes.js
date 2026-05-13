@@ -21,6 +21,44 @@ function definirMensagem(texto, tipo = "erro") {
   mensagem.style.color = tipo === "sucesso" ? "#15803d" : "#c62828";
 }
 
+function formatarPerfilUsuario(role) {
+  if (role === 1 || role === "Admin" || role === "admin") {
+    return "Administrador";
+  }
+
+  if (role === 2 || role === "Manager" || role === "manager") {
+    return "Gerente";
+  }
+
+  if (role === 3 || role === "Employee" || role === "employee") {
+    return "Funcionário";
+  }
+
+  return "Usuário";
+}
+
+function renderizarUsuariosComAcesso(usuarios) {
+  const container = obterElemento("listaUsuariosConfig");
+  if (!container) {
+    return;
+  }
+
+  if (!usuarios || usuarios.length === 0) {
+    container.innerHTML = `<p class="config-access-empty">Nenhum usuário adicional com acesso.</p>`;
+    return;
+  }
+
+  container.innerHTML = usuarios.map(usuario => `
+    <div class="config-access-item">
+      <div>
+        <strong>${usuario.name || "-"}</strong>
+        <span>${usuario.email || "-"}</span>
+      </div>
+      <span class="config-access-role">${formatarPerfilUsuario(usuario.role)}</span>
+    </div>
+  `).join("");
+}
+
 function carregarEmpresaLocal() {
   const dados = localStorage.getItem("empresaCadastrada");
 
@@ -80,11 +118,13 @@ async function carregarResumoOperacional() {
     }
 
     definirTexto("resumoUsuariosConfig", String(usuarios.length));
+    renderizarUsuariosComAcesso(usuarios);
     definirTexto("resumoStatusApi", "API conectada");
   } catch {
     definirTexto("resumoStatusApi", "Conexao instavel");
     definirMensagem("Nao foi possivel atualizar os indicadores do ambiente.");
     definirTexto("resumoUsuariosConfig", "-");
+    renderizarUsuariosComAcesso([]);
   }
 }
 
