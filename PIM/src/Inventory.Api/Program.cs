@@ -790,6 +790,7 @@ static MovementResponse ToMovementResponse(StockMovement movement) =>
         movement.Quantity,
         movement.DateUtc,
         movement.UserId,
-        movement.User?.Name ?? string.Empty);
+        movement.User?.Name ?? string.Empty,
+        movement.User?.Role);
 
 public partial class Program;

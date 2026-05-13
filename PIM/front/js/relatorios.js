@@ -13,6 +13,26 @@ function isSaida(tipo) {
   return tipo === 2 || tipo === "Exit" || tipo === "saida";
 }
 
+function formatarResponsavel(usuario, role) {
+  if (!usuario) {
+    return "-";
+  }
+
+  if (role === 1 || role === "Admin" || role === "admin") {
+    return `${usuario} (Administrador)`;
+  }
+
+  if (role === 2 || role === "Manager" || role === "manager") {
+    return `${usuario} (Gerente)`;
+  }
+
+  if (role === 3 || role === "Employee" || role === "employee") {
+    return `${usuario} (Funcionário)`;
+  }
+
+  return usuario;
+}
+
 function formatarMoeda(valor) {
   return valor.toLocaleString("pt-BR", {
     style: "currency",
@@ -64,6 +84,7 @@ function mapearVendas() {
       return {
         produto: mov.product || produto?.name || "-",
         data: new Date(mov.dateUtc).toLocaleDateString("pt-BR"),
+        responsavel: formatarResponsavel(mov.user, mov.userRole),
         total,
         pagamento: "—",
         quantidade: mov.quantity
@@ -90,7 +111,7 @@ function carregarRelatorios(vendas) {
   if (vendas.length === 0) {
     tabela.innerHTML = `
       <tr>
-        <td colspan="6">Nenhuma venda registrada.</td>
+        <td colspan="7">Nenhuma venda registrada.</td>
       </tr>
     `;
     return;
@@ -102,6 +123,7 @@ function carregarRelatorios(vendas) {
         <td>#${index + 1}</td>
         <td>${venda.produto}</td>
         <td>${venda.data}</td>
+        <td>${venda.responsavel}</td>
         <td>${formatarMoeda(venda.total)}</td>
         <td>${venda.pagamento}</td>
         <td>${venda.quantidade}</td>

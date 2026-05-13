@@ -12,7 +12,8 @@ public record MovementResponse(
     int Quantity,
     DateTime DateUtc,
     int UserId,
-    string User);
+    string User,
+    UserRole? UserRole);
 
 public record StockReportItemResponse(
     int ProductId,
