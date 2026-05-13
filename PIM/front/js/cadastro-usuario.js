@@ -24,17 +24,17 @@ async function cadastrarUsuario() {
         name: nome,
         email,
         password: senha,
-        role: 1
+        role: 3
       })
     });
 
     if (resposta.status === 401 || resposta.status === 403) {
-      erro.innerText = "Apenas administradores podem cadastrar usuários.";
+      erro.innerText = "Apenas administradores podem cadastrar funcionários.";
       return;
     }
 
     if (!resposta.ok) {
-      let mensagem = "Erro ao cadastrar usuário.";
+      let mensagem = "Erro ao cadastrar funcionário.";
       try {
         const data = await resposta.json();
         if (data && data.message) {
@@ -52,7 +52,7 @@ async function cadastrarUsuario() {
     document.getElementById("senha").value = "";
     document.getElementById("confirmarSenha").value = "";
 
-    alert("Usuário cadastrado com sucesso!");
+    alert("Funcionário cadastrado com sucesso!");
   } catch (error) {
     erro.innerText = "Falha ao conectar com o servidor.";
   }

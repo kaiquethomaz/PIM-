@@ -40,6 +40,21 @@ public class ApiTests(CustomWebApplicationFactory factory) : IClassFixture<Custo
     }
 
     [Fact]
+    public async Task Admin_Can_Create_Employee_User()
+    {
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await LoginAsync(client, "admin@test.com", "Admin@123"));
+
+        var response = await client.PostAsJsonAsync("/api/users", new CreateUserRequest("Colaborador", "colaborador@test.com", "Colaborador@123", UserRole.Employee));
+
+        response.EnsureSuccessStatusCode();
+
+        var created = await response.Content.ReadFromJsonAsync<UserResponse>();
+        Assert.NotNull(created);
+        Assert.Equal(UserRole.Employee, created!.Role);
+    }
+
+    [Fact]
     public async Task Employee_Cannot_Access_Manager_Report()
     {
         var client = factory.CreateClient();

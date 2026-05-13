@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastrar Usuário</title>
+  <title>Cadastrar Funcionário</title>
 
   <link rel="stylesheet" href="global.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -44,7 +44,7 @@
 
       <li class="ativo somente-admin" onclick="ir('cadastro-usuario.html')">
         <span class="material-icons">person_add</span>
-        Usuários
+        Funcionários
       </li>
 
       <li onclick="logout()">
@@ -56,19 +56,25 @@
   </div>
 
   <div class="content">
-    <h1>Cadastrar Usuário</h1>
+    <div class="page-header">
+      <div>
+        <h1>Cadastrar Funcionário</h1>
+        <p class="page-subtitle">Crie um acesso operacional com permissão somente para estoque e vendas.</p>
+      </div>
+    </div>
 
     <div class="produto-form">
-      <input type="text" id="nome" placeholder="Nome do usuário">
+      <input type="text" id="nome" placeholder="Nome do funcionário">
       <input type="email" id="email" placeholder="E-mail">
       <input type="password" id="senha" placeholder="Senha">
       <input type="password" id="confirmarSenha" placeholder="Confirme a senha">
 
-      <p><strong>Perfil:</strong> Administrador</p>
+      <p><strong>Perfil:</strong> Funcionário</p>
+      <p class="page-subtitle">Este acesso não poderá abrir dashboard, relatórios, configurações ou cadastro de produtos.</p>
 
       <p id="erro"></p>
 
-      <button onclick="cadastrarUsuario()">Cadastrar usuário</button>
+      <button onclick="cadastrarUsuario()">Cadastrar funcionário</button>
     </div>
   </div>
 
