@@ -7,6 +7,26 @@ if (nomeComercio && document.getElementById("nomeComercio")) {
 
 const perfilUsuario = localStorage.getItem("perfilUsuario");
 
+function limparSessao() {
+  [
+    "usuarioLogado",
+    "perfilUsuario",
+    "authToken",
+    "authExpiresAtUtc",
+    "usuarioNome",
+    "usuarioEmail"
+  ].forEach(chave => localStorage.removeItem(chave));
+}
+
+function ir(pagina) {
+  window.location.href = pagina;
+}
+
+function logout() {
+  limparSessao();
+  window.location.href = "login.html";
+}
+
 function apiFetch(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (options.body && !headers.has("Content-Type")) {
