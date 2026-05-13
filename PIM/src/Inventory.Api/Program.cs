@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using Inventory.Api.Auth;
 using Inventory.Api.Data;
@@ -466,12 +468,36 @@ var movements = app.MapGroup("/api/movements").RequireAuthorization();
 movements.MapPost("/", async (
     CreateMovementRequest request,
     IStockService stockService,
+    AppDbContext dbContext,
     HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {
     try
     {
-        var movement = await stockService.RegisterMovementAsync(request, httpContext.User.GetUserId(), cancellationToken);
+        var userId = httpContext.User.GetUserId();
+        var userExists = await dbContext.Users.AnyAsync(x => x.Id == userId, cancellationToken);
+        if (!userExists)
+        {
+            var email = httpContext.User.FindFirstValue(ClaimTypes.Email)
+                ?? httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Email);
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return Results.BadRequest(new { message = "Usuario nao encontrado." });
+            }
+
+            var user = await dbContext.Users
+                .FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
+
+            if (user is null)
+            {
+                return Results.BadRequest(new { message = "Usuario nao encontrado." });
+            }
+
+            userId = user.Id;
+        }
+
+        var movement = await stockService.RegisterMovementAsync(request, userId, cancellationToken);
         return Results.Created($"/api/movements/{movement.Id}", ToMovementResponse(movement));
     }
     catch (KeyNotFoundException ex)
@@ -481,6 +507,10 @@ movements.MapPost("/", async (
     catch (InvalidOperationException ex)
     {
         return Results.BadRequest(new { message = ex.Message });
+    }
+    catch (DbUpdateException)
+    {
+        return Results.BadRequest(new { message = "Usuario ou produto nao encontrado." });
     }
 }).RequireAuthorization("MovementOperator");
 

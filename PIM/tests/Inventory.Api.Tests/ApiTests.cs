@@ -89,6 +89,54 @@ public class ApiTests(CustomWebApplicationFactory factory) : IClassFixture<Custo
         Assert.Equal(11, products!.Single(x => x.Id == 1).Quantity);
     }
 
+    [Fact]
+    public async Task Demand_Forecast_Returns_Data_With_Short_History()
+    {
+        var client = factory.CreateClient();
+        await RegistrarVendaAsync(client);
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await LoginAsync(client, "admin@test.com", "Admin@123"));
+
+        var response = await client.GetAsync("/api/reports/demand-forecast?days=7");
+
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<DemandForecastResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal(7, payload!.Points.Count);
+    }
+
+    [Fact]
+    public async Task Sales_Forecast_Returns_Data_With_Short_History()
+    {
+        var client = factory.CreateClient();
+        await RegistrarVendaAsync(client);
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await LoginAsync(client, "admin@test.com", "Admin@123"));
+
+        var response = await client.GetAsync("/api/reports/sales-forecast?days=7");
+
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<DemandForecastResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal(7, payload!.Points.Count);
+    }
+
+    [Fact]
+    public async Task Revenue_Forecast_Returns_Data_With_Short_History()
+    {
+        var client = factory.CreateClient();
+        await RegistrarVendaAsync(client);
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await LoginAsync(client, "admin@test.com", "Admin@123"));
+
+        var response = await client.GetAsync("/api/reports/revenue-forecast?days=7");
+
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<DemandForecastResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal(7, payload!.Points.Count);
+    }
+
     private static async Task<string> LoginAsync(HttpClient client, string email, string password)
     {
         var response = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(email, password));
@@ -96,5 +144,13 @@ public class ApiTests(CustomWebApplicationFactory factory) : IClassFixture<Custo
 
         var payload = await response.Content.ReadFromJsonAsync<LoginResponse>();
         return payload!.Token;
+    }
+
+    private static async Task RegistrarVendaAsync(HttpClient client)
+    {
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await LoginAsync(client, "employee@test.com", "Employee@123"));
+
+        var response = await client.PostAsJsonAsync("/api/movements", new CreateMovementRequest(1, MovementType.Exit, 1));
+        response.EnsureSuccessStatusCode();
     }
 }

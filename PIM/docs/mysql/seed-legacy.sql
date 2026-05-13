@@ -54,7 +54,7 @@ CREATE TABLE movimentacoes (
 INSERT INTO __EFMigrationsHistory VALUES ('20260504211357_InitialCreate','8.0.0');
 
 INSERT INTO categorias VALUES
-(1,'Periféricos'),
+(1,'Perifericos'),
 (2,'Setup Gamer'),
 (3,'Mobilidade Tech');
 
@@ -68,8 +68,8 @@ INSERT INTO usuarios VALUES
 
 INSERT INTO produtos VALUES
 (1,'Mouse Gamer',1,1,150.00,27),
-(3,'Monitor Ultrawide 29"',2,2,1200.00,0),
-(4,'Teclado Mecânico RGB Pro',2,3,350.00,0),
+(3,'Monitor Ultrawide 29\"',2,2,1200.00,0),
+(4,'Teclado Mecanico RGB Pro',2,3,350.00,0),
 (5,'Power Bank 20000mAh Turbo',3,2,180.00,10),
 (6,'Fone Bluetooth Noise Canceling',3,3,400.00,15),
 (8,'Fone Bluetooth Noise Canceling',3,3,400.00,0);

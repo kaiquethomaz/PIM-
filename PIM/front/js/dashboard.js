@@ -283,60 +283,92 @@ function atualizarGraficoPrevisaoFaturamento(dados) {
   graficoFaturamentoPrev.update();
 }
 
-function atualizarResumoDashboard(movimentosLista, maisVendidosLista) {
-  const entradas = movimentosLista.reduce((total, mov) => {
-    if (isEntrada(mov.type)) {
-      return total + Number(mov.quantity || 0);
-    }
-    return total;
-  }, 0);
-
-  const saidas = movimentosLista.reduce((total, mov) => {
-    if (isSaida(mov.type)) {
-      return total + Number(mov.quantity || 0);
-    }
-    return total;
-  }, 0);
-
-  const saldo = entradas - saidas;
-  const top = maisVendidosLista && maisVendidosLista.length > 0
-    ? maisVendidosLista[0]
-    : null;
-
-  const entradasEl = document.getElementById("resumoEntradas");
-  const saidasEl = document.getElementById("resumoSaidas");
-  const saldoEl = document.getElementById("resumoSaldo");
-  const topEl = document.getElementById("resumoTopProduto");
-  const topQtdEl = document.getElementById("resumoTopQtd");
-
-  if (entradasEl) {
-    entradasEl.innerText = entradas.toLocaleString("pt-BR");
-  }
-
-  if (saidasEl) {
-    saidasEl.innerText = saidas.toLocaleString("pt-BR");
-  }
-
-  if (saldoEl) {
-    saldoEl.innerText = saldo.toLocaleString("pt-BR");
-  }
-
-  if (topEl) {
-    topEl.innerText = top ? top.product : "-";
-  }
-
-  if (topQtdEl) {
-    topQtdEl.innerText = top ? `${top.totalSold} itens` : "0 itens";
-  }
-}
-
 function obterPeriodo() {
   const select = document.getElementById("filtroPeriodo");
   return select ? select.value : "mensal";
 }
 
+function inicioSemanaUtc(data) {
+  const copia = new Date(Date.UTC(
+    data.getUTCFullYear(),
+    data.getUTCMonth(),
+    data.getUTCDate()
+  ));
+  const diaSemana = copia.getUTCDay();
+  const deslocamento = diaSemana === 0 ? -6 : 1 - diaSemana;
+  copia.setUTCDate(copia.getUTCDate() + deslocamento);
+  return copia;
+}
+
+function formatarLabelDia(data) {
+  return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+}
+
+function formatarLabelSemana(data) {
+  const fimSemana = new Date(data);
+  fimSemana.setUTCDate(fimSemana.getUTCDate() + 6);
+  return `${formatarLabelDia(data)}-${formatarLabelDia(fimSemana)}`;
+}
+
+function obterBucketMovimento(data, periodo) {
+  const ano = data.getUTCFullYear();
+  const mes = data.getUTCMonth();
+
+  if (periodo === "diario") {
+    return `${ano}-${mes + 1}-${data.getUTCDate()}`;
+  }
+
+  if (periodo === "semanal") {
+    const inicioSemana = inicioSemanaUtc(data);
+    return `W-${inicioSemana.toISOString().slice(0, 10)}`;
+  }
+
+  if (periodo === "trimestral") {
+    const trimestre = Math.floor(mes / 3) + 1;
+    return `${ano}-Q${trimestre}`;
+  }
+
+  if (periodo === "anual") {
+    return String(ano);
+  }
+
+  return `${ano}-${mes + 1}`;
+}
+
 function montarBuckets(periodo) {
   const agora = new Date();
+
+  if (periodo === "diario") {
+    const labels = [];
+    const keys = [];
+
+    for (let i = 13; i >= 0; i -= 1) {
+      const data = new Date(Date.UTC(
+        agora.getUTCFullYear(),
+        agora.getUTCMonth(),
+        agora.getUTCDate() - i
+      ));
+      labels.push(formatarLabelDia(data));
+      keys.push(obterBucketMovimento(data, periodo));
+    }
+
+    return { labels, keys };
+  }
+
+  if (periodo === "semanal") {
+    const labels = [];
+    const keys = [];
+    const semanaAtual = inicioSemanaUtc(agora);
+
+    for (let i = 7; i >= 0; i -= 1) {
+      const data = new Date(semanaAtual);
+      data.setUTCDate(data.getUTCDate() - (i * 7));
+      labels.push(formatarLabelSemana(data));
+      keys.push(obterBucketMovimento(data, periodo));
+    }
+
+    return { labels, keys };
+  }
 
   if (periodo === "trimestral") {
     const labels = [];
@@ -385,6 +417,71 @@ function montarBuckets(periodo) {
   return { labels, keys };
 }
 
+function filtrarMovimentosPorPeriodo(periodo, keys) {
+  const keysSet = new Set(keys);
+  return movimentos.filter(mov => {
+    const data = new Date(mov.dateUtc);
+    return keysSet.has(obterBucketMovimento(data, periodo));
+  });
+}
+
+function atualizarResumoDashboard(movimentosLista) {
+  const entradas = movimentosLista.reduce((total, mov) => {
+    if (isEntrada(mov.type)) {
+      return total + Number(mov.quantity || 0);
+    }
+    return total;
+  }, 0);
+
+  const saidas = movimentosLista.reduce((total, mov) => {
+    if (isSaida(mov.type)) {
+      return total + Number(mov.quantity || 0);
+    }
+    return total;
+  }, 0);
+
+  const saldo = entradas - saidas;
+  const vendidosPorProduto = new Map();
+
+  movimentosLista.forEach(mov => {
+    if (!isSaida(mov.type)) {
+      return;
+    }
+
+    const quantidadeAtual = vendidosPorProduto.get(mov.product) || 0;
+    vendidosPorProduto.set(mov.product, quantidadeAtual + Number(mov.quantity || 0));
+  });
+
+  const top = [...vendidosPorProduto.entries()]
+    .sort((a, b) => b[1] - a[1])[0] || null;
+
+  const entradasEl = document.getElementById("resumoEntradas");
+  const saidasEl = document.getElementById("resumoSaidas");
+  const saldoEl = document.getElementById("resumoSaldo");
+  const topEl = document.getElementById("resumoTopProduto");
+  const topQtdEl = document.getElementById("resumoTopQtd");
+
+  if (entradasEl) {
+    entradasEl.innerText = entradas.toLocaleString("pt-BR");
+  }
+
+  if (saidasEl) {
+    saidasEl.innerText = saidas.toLocaleString("pt-BR");
+  }
+
+  if (saldoEl) {
+    saldoEl.innerText = saldo.toLocaleString("pt-BR");
+  }
+
+  if (topEl) {
+    topEl.innerText = top ? top[0] : "-";
+  }
+
+  if (topQtdEl) {
+    topQtdEl.innerText = top ? `${top[1]} itens` : "0 itens";
+  }
+}
+
 function calcularSerie(periodo) {
   const { labels, keys } = montarBuckets(periodo);
   const entradas = Array(labels.length).fill(0);
@@ -393,18 +490,7 @@ function calcularSerie(periodo) {
 
   movimentos.forEach(mov => {
     const data = new Date(mov.dateUtc);
-    const ano = data.getUTCFullYear();
-    const mes = data.getUTCMonth();
-    let key;
-
-    if (periodo === "trimestral") {
-      const trimestre = Math.floor(mes / 3) + 1;
-      key = `${ano}-Q${trimestre}`;
-    } else if (periodo === "anual") {
-      key = String(ano);
-    } else {
-      key = `${ano}-${mes + 1}`;
-    }
+    const key = obterBucketMovimento(data, periodo);
 
     const indice = indicePorKey.get(key);
     if (indice === undefined) {
@@ -420,7 +506,8 @@ function calcularSerie(periodo) {
     }
   });
 
-  return { labels, entradas, saidas };
+  const movimentosFiltrados = filtrarMovimentosPorPeriodo(periodo, keys);
+  return { labels, entradas, saidas, movimentosFiltrados };
 }
 
 function atualizarGraficoEntradaSaida() {
@@ -471,6 +558,8 @@ function atualizarGraficoEntradaSaida() {
   graficoEntradaSaida.data.datasets[0].data = serie.entradas;
   graficoEntradaSaida.data.datasets[1].data = serie.saidas;
   graficoEntradaSaida.update();
+
+  atualizarResumoDashboard(serie.movimentosFiltrados);
 }
 
 function filtrarDashboard() {
@@ -496,7 +585,6 @@ async function iniciarDashboard() {
 
     atualizarGraficoMaisVendidos(maisVendidos);
     atualizarGraficoEntradaSaida();
-    atualizarResumoDashboard(movimentos, maisVendidos);
   } catch (error) {
     erro.innerText = "Não foi possível carregar os dados do dashboard.";
   }

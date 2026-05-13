@@ -21,6 +21,13 @@ public class StockService(AppDbContext dbContext) : IStockService
             throw new KeyNotFoundException("Produto nao encontrado.");
         }
 
+        var userExists = await dbContext.Users
+            .AnyAsync(x => x.Id == userId, cancellationToken);
+        if (!userExists)
+        {
+            throw new InvalidOperationException("Usuario nao encontrado.");
+        }
+
         if (request.Type == MovementType.Exit && product.Quantity < request.Quantity)
         {
             throw new InvalidOperationException("Nao e permitido deixar o estoque negativo.");

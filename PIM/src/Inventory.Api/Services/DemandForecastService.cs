@@ -93,7 +93,7 @@ public class DemandForecastService(AppDbContext dbContext) : IDemandForecastServ
         var trainSize = serieDiaria.Count;
         if (trainSize < 4)
         {
-            return null;
+            return BuildFallbackForecast(serieDiaria, dataFinal, horizonDays);
         }
 
         var windowSize = Math.Min(7, Math.Max(2, trainSize / 2));
@@ -113,10 +113,55 @@ public class DemandForecastService(AppDbContext dbContext) : IDemandForecastServ
             confidenceLowerBoundColumn: nameof(SalesForecast.LowerBound),
             confidenceUpperBoundColumn: nameof(SalesForecast.UpperBound));
 
-        var model = pipeline.Fit(dataView);
-        var transformado = model.Transform(dataView);
-        var forecast = mlContext.Data.CreateEnumerable<SalesForecast>(transformado, reuseRowObject: false)
-            .Last();
+        try
+        {
+            var model = pipeline.Fit(dataView);
+            var transformado = model.Transform(dataView);
+            var forecast = mlContext.Data.CreateEnumerable<SalesForecast>(transformado, reuseRowObject: false)
+                .Last();
+
+            var pontos = new List<DemandForecastPointResponse>();
+            for (var i = 0; i < horizonDays; i++)
+            {
+                var dataPrevista = dataFinal.AddDays(i + 1);
+                var previsto = Math.Max(0, forecast.ForecastedSales[i]);
+                var limiteInferior = Math.Max(0, forecast.LowerBound[i]);
+                var limiteSuperior = Math.Max(previsto, forecast.UpperBound[i]);
+
+                pontos.Add(new DemandForecastPointResponse(
+                    dataPrevista,
+                    previsto,
+                    limiteInferior,
+                    limiteSuperior));
+            }
+
+            return new DemandForecastResponse(horizonDays, pontos);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return BuildFallbackForecast(serieDiaria, dataFinal, horizonDays);
+        }
+        catch (InvalidOperationException)
+        {
+            return BuildFallbackForecast(serieDiaria, dataFinal, horizonDays);
+        }
+    }
+
+    private static DemandForecastResponse BuildFallbackForecast(
+        IReadOnlyList<SalesData> serieDiaria,
+        DateTime dataFinal,
+        int horizonDays)
+    {
+        var valores = serieDiaria
+            .Select(x => x.Value)
+            .ToArray();
+
+        var mediaHistorica = valores.Length == 0 ? 0 : valores.Average();
+        var janelaRecente = valores.TakeLast(Math.Min(3, valores.Length)).ToArray();
+        var mediaRecente = janelaRecente.Length == 0 ? mediaHistorica : janelaRecente.Average();
+        var ultimoValor = valores.Length == 0 ? 0 : valores[^1];
+        var previstoBase = Math.Max(0, (ultimoValor * 0.5f) + (mediaRecente * 0.3f) + (mediaHistorica * 0.2f));
+        var margem = Math.Max(1f, previstoBase * 0.15f);
 
         var pontos = new List<DemandForecastPointResponse>();
         for (var i = 0; i < horizonDays; i++)
@@ -124,9 +169,9 @@ public class DemandForecastService(AppDbContext dbContext) : IDemandForecastServ
             var dataPrevista = dataFinal.AddDays(i + 1);
             pontos.Add(new DemandForecastPointResponse(
                 dataPrevista,
-                forecast.ForecastedSales[i],
-                forecast.LowerBound[i],
-                forecast.UpperBound[i]));
+                previstoBase,
+                Math.Max(0, previstoBase - margem),
+                previstoBase + margem));
         }
 
         return new DemandForecastResponse(horizonDays, pontos);
