@@ -34,10 +34,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasColumnName("senha")
                 .IsRequired();
 
-            entity.Property(x => x.Role)
-                .HasColumnName("tipo")
-                .HasConversion<string>()
-                .IsRequired();
+           entity.Property(x => x.Role)
+            .HasColumnName("tipo")
+            .IsRequired();
 
             entity.HasIndex(x => x.Email).IsUnique();
         });

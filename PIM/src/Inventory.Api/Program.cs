@@ -19,9 +19,12 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptio
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Data Source=inventory.db";
-    options.UseSqlite(connectionString);
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+    options.UseMySql(
+        connectionString,
+        ServerVersion.AutoDetect(connectionString)
+    );
 });
 
 builder.Services.AddCors(options =>
@@ -107,8 +110,15 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-await SeedData.InitializeAsync(app.Services, app.Configuration);
+    Console.WriteLine(db.Database.GetConnectionString());
+}
+
+// DESABILITADO PARA USAR MYSQL REAL
+// await SeedData.InitializeAsync(app.Services, app.Configuration);
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -132,9 +142,26 @@ auth.MapPost("/login", async (
     IJwtTokenService jwtTokenService,
     CancellationToken cancellationToken) =>
 {
-    var user = await dbContext.Users.FirstOrDefaultAsync(x => x.Email == request.Email, cancellationToken);
+    var user = await dbContext.Users
+        .FirstOrDefaultAsync(x => x.Email == request.Email, cancellationToken);
 
-    if (user is null || !passwordHasher.Verify(request.Password, user.PasswordHash))
+    if (user is null)
+    {
+        Console.WriteLine("Usuario nao encontrado");
+        return Results.Unauthorized();
+    }
+
+    Console.WriteLine("Senha digitada: " + request.Password);
+    Console.WriteLine("Hash banco: " + user.PasswordHash);
+
+    var senhaValida = passwordHasher.Verify(
+        request.Password,
+        user.PasswordHash
+    );
+
+    Console.WriteLine("Senha valida? " + senhaValida);
+
+    if (!senhaValida)
     {
         return Results.Unauthorized();
     }
@@ -226,7 +253,8 @@ companies.MapPost("/login", async (
             Name = company.Name,
             Email = company.Email,
             PasswordHash = company.PasswordHash,
-            Role = UserRole.Admin
+            Role = UserRole.Admin,
+            CompanyId = company.Id
         };
 
         dbContext.Users.Add(user);
