@@ -20,5 +20,10 @@ public class User
     [Column("tipo")]
     public UserRole Role { get; set; }
 
+    [Column("empresa_id")]
+    public int CompanyId { get; set; }
+
+    public Company? Company { get; set; }
+
     public ICollection<StockMovement> Movements { get; set; } = new List<StockMovement>();
 }

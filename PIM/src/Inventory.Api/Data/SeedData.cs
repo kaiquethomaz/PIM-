@@ -22,6 +22,25 @@ public static class SeedData
         var adminEmail = configuration["SeedAdmin:Email"] ?? "admin@pim.local";
         var adminPassword = configuration["SeedAdmin:Password"] ?? "Admin@123";
 
+        Company company;
+        if (!await db.Companies.AnyAsync())
+        {
+            company = new Company
+            {
+                Name = "Empresa Seed",
+                Cnpj = "12.345.678/0001-99",
+                Email = "empresa@inventory.local",
+                PasswordHash = hasher.Hash(adminPassword)
+            };
+
+            db.Companies.Add(company);
+            await db.SaveChangesAsync();
+        }
+        else
+        {
+            company = await db.Companies.OrderBy(x => x.Id).FirstAsync();
+        }
+
         if (!await db.Users.AnyAsync())
         {
             adminUser = new User
@@ -29,7 +48,8 @@ public static class SeedData
                 Name = adminName,
                 Email = adminEmail,
                 PasswordHash = hasher.Hash(adminPassword),
-                Role = UserRole.Admin
+                Role = UserRole.Admin,
+                CompanyId = company.Id
             };
 
             db.Users.Add(adminUser);
@@ -45,16 +65,16 @@ public static class SeedData
         if (!await db.Categories.AnyAsync())
         {
             db.Categories.AddRange(
-                new Category { Name = "Alimentos" },
-                new Category { Name = "Limpeza" }
+                new Category { Name = "Alimentos", CompanyId = company.Id },
+                new Category { Name = "Limpeza", CompanyId = company.Id }
             );
         }
 
         if (!await db.Suppliers.AnyAsync())
         {
             db.Suppliers.AddRange(
-                new Supplier { Name = "Fornecedor Alfa", Contact = "contato@alfasup.com" },
-                new Supplier { Name = "Fornecedor Beta", Contact = "contato@betasup.com" }
+                new Supplier { Name = "Fornecedor Alfa", Contact = "contato@alfasup.com", CompanyId = company.Id },
+                new Supplier { Name = "Fornecedor Beta", Contact = "contato@betasup.com", CompanyId = company.Id }
             );
         }
 
@@ -74,6 +94,7 @@ public static class SeedData
                 new Product
                 {
                     Name = "Café",
+                    CompanyId = company.Id,
                     CategoryId = categoriaAlimentos.Id,
                     SupplierId = fornecedorAlfa.Id,
                     Price = 18.00m,
@@ -82,6 +103,7 @@ public static class SeedData
                 new Product
                 {
                     Name = "Arroz",
+                    CompanyId = company.Id,
                     CategoryId = categoriaAlimentos.Id,
                     SupplierId = fornecedorBeta.Id,
                     Price = 28.00m,
@@ -90,6 +112,7 @@ public static class SeedData
                 new Product
                 {
                     Name = "Detergente",
+                    CompanyId = company.Id,
                     CategoryId = categoriaLimpeza.Id,
                     SupplierId = fornecedorAlfa.Id,
                     Price = 3.50m,

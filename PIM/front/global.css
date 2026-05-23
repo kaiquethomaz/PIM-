@@ -38,6 +38,133 @@ body {
   overflow-x: hidden;
 }
 
+body.auth-page {
+  min-height: 100vh;
+  overflow: hidden;
+  display: block;
+  padding: 0;
+}
+
+body.auth-page .login-shell,
+body.auth-page .cadastro-container {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  min-height: 100vh;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+}
+
+body.auth-page .login-shell {
+  grid-template-columns: 0.9fr 1.1fr;
+}
+
+body.auth-page .cadastro-left {
+  width: 45%;
+}
+
+body.auth-page .cadastro-right {
+  width: 55%;
+}
+
+body.auth-page .logo {
+  color: #f8fafc;
+  text-shadow: 0 6px 18px rgba(15, 23, 42, 0.35);
+}
+
+body.auth-page .login-hero-panel,
+body.auth-page .cadastro-left {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.22), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.14), transparent 34%),
+    linear-gradient(160deg, var(--blue-700), var(--blue-950));
+  color: #f8fafc;
+}
+
+body.auth-page .login-brand strong,
+body.auth-page .cadastro-left h2 {
+  color: #ffffff;
+}
+
+body.auth-page .login-brand span:last-child,
+body.auth-page .login-hero-panel p {
+  color: rgba(248, 250, 252, 0.82);
+}
+
+body.auth-page .login-badge {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+}
+
+body.auth-page .login-brand-mark {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+body.auth-page .login-hero-point {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+body.auth-page .login-hero-point strong {
+  color: #ffffff;
+}
+
+body.auth-page .login-hero-point span:last-child {
+  color: rgba(248, 250, 252, 0.78);
+}
+
+body.auth-page .login-hero-point .material-icons {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  width: 38px;
+  height: 38px;
+  font-size: 20px;
+}
+
+body.auth-page .login-hero-panel h1 {
+  font-size: 38px;
+  line-height: 1.12;
+}
+
+body.auth-page .login-hero-panel p {
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 420px;
+}
+
+body.auth-page .login-hero-points {
+  gap: 12px;
+  margin-top: 28px;
+}
+
+body.auth-page .login-hero-point {
+  padding: 14px 16px;
+}
+
+body.auth-page .login-hero-point strong {
+  font-size: 14px;
+}
+
+body.auth-page .login-hero-point span:last-child {
+  font-size: 12.5px;
+}
+
+body.auth-page .btn-outline {
+  border-color: rgba(255, 255, 255, 0.85);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body.auth-page .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
 .logo {
   position: absolute;
   top: 30px;
@@ -545,6 +672,11 @@ body {
   background: linear-gradient(180deg, var(--blue-800), var(--blue-900));
   color: white;
   padding: 30px 20px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: flex-start;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   box-shadow: 8px 0 18px rgba(15, 23, 42, 0.12);
@@ -588,6 +720,12 @@ body {
   padding: 32px 42px;
 }
 
+.content > * {
+  width: 100%;
+  max-width: 1200px;
+  margin-right: auto;
+}
+
 .content h1 {
   font-size: 34px;
   margin-bottom: 10px;
@@ -617,6 +755,14 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.relatorio-pdf-btn {
+  width: auto;
+  margin: 0;
+  padding: 10px 18px;
+  border-radius: 12px;
+  white-space: nowrap;
 }
 
 .filtros {
@@ -868,6 +1014,11 @@ canvas {
   margin-bottom: 8px;
 }
 
+.cabecalho-vendas,
+.cabecalho-relatorios {
+  grid-template-columns: 0.8fr 2fr 1.2fr 1.4fr 1.1fr 1fr 1fr;
+}
+
 .tabela-card {
   background: var(--surface);
   min-height: 430px;
@@ -935,13 +1086,21 @@ canvas {
   color: #111;
 }
 
-.acoes span:hover {
+.acoes span:hover,
+.acoes .acao-link:hover {
   color: var(--blue-700);
+}
+
+.acoes .acao-link {
+  color: #111;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 
 #tabelaVendas tr {
   display: grid;
-  grid-template-columns: 1fr 2fr 1.5fr 1.3fr 1.5fr 1fr;
+  grid-template-columns: 0.8fr 2fr 1.2fr 1.4fr 1.1fr 1fr 1fr;
   align-items: center;
 }
 
@@ -956,13 +1115,17 @@ canvas {
 
 #tabelaRelatorios tr {
   display: grid;
-  grid-template-columns: 1fr 2fr 1.5fr 1.3fr 1.5fr 1fr;
+  grid-template-columns: 0.8fr 2fr 1.2fr 1.4fr 1.1fr 1fr 1fr;
   align-items: center;
 }
 
 #tabelaRelatorios td {
   padding: 18px 10px;
   text-align: center;
+}
+
+#tabelaRelatorios .nowrap {
+  white-space: nowrap;
 }
 
 #tabelaRelatorios tr:not(:last-child) {
@@ -1050,13 +1213,17 @@ canvas {
 
 #tabelaVendas tr {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1.2fr 1fr 1.2fr 1fr;
+  grid-template-columns: 0.8fr 2fr 1.2fr 1.4fr 1.1fr 1fr 1fr;
   align-items: center;
 }
 
 #tabelaVendas td {
   padding: 18px 10px;
   text-align: center;
+}
+
+#tabelaVendas .nowrap {
+  white-space: nowrap;
 }
 
 #tabelaVendas tr:not(:last-child) {
@@ -1094,7 +1261,7 @@ canvas {
 
 #tabelaRelatorios tr {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1.2fr 1fr 1.2fr 1fr;
+  grid-template-columns: 0.8fr 2fr 1.2fr 1.4fr 1.1fr 1fr 1fr;
   align-items: center;
 }
 
@@ -1446,6 +1613,7 @@ canvas {
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
+  flex-wrap: wrap;
   padding: 18px;
   border-radius: 18px;
   border: 1px solid var(--border);
@@ -1455,7 +1623,12 @@ canvas {
 }
 
 .config-action-item > div {
-  min-width: 0;
+  min-width: 220px;
+  flex: 1 1 220px;
+}
+
+.config-action-item button {
+  align-self: flex-start;
 }
 
 .config-action-item strong {
@@ -1598,6 +1771,11 @@ canvas {
   color: white;
   padding: 30px 20px;
 
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: flex-start;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
@@ -1652,6 +1830,8 @@ canvas {
     height: auto;
     min-height: auto;
     padding: 18px;
+    position: static;
+    overflow-y: visible;
   }
 
   .sidebar h2 {

@@ -34,11 +34,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasColumnName("senha")
                 .IsRequired();
 
-           entity.Property(x => x.Role)
-            .HasColumnName("tipo")
-            .IsRequired();
+            entity.Property(x => x.Role)
+             .HasColumnName("tipo")
+             .IsRequired();
+
+            entity.Property(x => x.CompanyId)
+                .HasColumnName("empresa_id")
+                .IsRequired();
 
             entity.HasIndex(x => x.Email).IsUnique();
+
+            entity.HasOne(x => x.Company)
+                .WithMany()
+                .HasForeignKey(x => x.CompanyId);
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -51,6 +59,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasColumnName("nome")
                 .HasMaxLength(120)
                 .IsRequired();
+
+            entity.Property(x => x.CompanyId)
+                .HasColumnName("empresa_id")
+                .IsRequired();
+
+            entity.HasOne(x => x.Company)
+                .WithMany()
+                .HasForeignKey(x => x.CompanyId);
 
             entity.HasIndex(x => x.Name).IsUnique();
         });
@@ -70,6 +86,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasColumnName("contato")
                 .HasMaxLength(180)
                 .IsRequired();
+
+            entity.Property(x => x.CompanyId)
+                .HasColumnName("empresa_id")
+                .IsRequired();
+
+            entity.HasOne(x => x.Company)
+                .WithMany()
+                .HasForeignKey(x => x.CompanyId);
         });
 
         modelBuilder.Entity<Product>(entity =>
@@ -81,6 +105,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Name)
                 .HasColumnName("nome")
                 .HasMaxLength(120)
+                .IsRequired();
+
+            entity.Property(x => x.CompanyId)
+                .HasColumnName("empresa_id")
                 .IsRequired();
 
             entity.Property(x => x.Price)
@@ -107,6 +135,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(x => x.Supplier)
                 .WithMany(x => x.Products)
                 .HasForeignKey(x => x.SupplierId);
+
+            entity.HasOne(x => x.Company)
+                .WithMany()
+                .HasForeignKey(x => x.CompanyId);
         });
 
         modelBuilder.Entity<StockMovement>(entity =>

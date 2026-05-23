@@ -64,7 +64,7 @@ function renderizarEstoque(lista) {
         <td><span class="status ${status}"></span></td>
         <td class="acoes">
           ${perfil !== "funcionario" ? `
-            <span class="material-icons" onclick="editarProduto(${produto.id})">edit</span>
+            <a class="material-icons acao-link" href="cadastro-produto.html?id=${produto.id}" aria-label="Editar produto">edit</a>
             <span class="material-icons" onclick="excluirProduto(${produto.id})">delete</span>
           ` : `
             <span class="sem-permissao">Sem permissão</span>

@@ -292,12 +292,41 @@ users.MapPost("/", async (
         return Results.BadRequest(new { message = "Ja existe usuario com este e-mail." });
     }
 
+    int companyId;
+    if (anyUser)
+    {
+        var currentUser = await GetCurrentUserAsync(dbContext, httpContext, cancellationToken);
+        if (currentUser is null)
+        {
+            return Results.BadRequest(new { message = "Usuario nao encontrado." });
+        }
+
+        companyId = currentUser.CompanyId;
+    }
+    else
+    {
+        var company = await dbContext.Companies
+            .OrderBy(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (company is null)
+        {
+            return Results.BadRequest(new
+            {
+                message = "Nenhuma empresa cadastrada. Cadastre uma empresa antes de criar usuarios."
+            });
+        }
+
+        companyId = company.Id;
+    }
+
     var user = new User
     {
         Name = request.Name,
         Email = request.Email,
         PasswordHash = passwordHasher.Hash(request.Password),
-        Role = request.Role
+        Role = request.Role,
+        CompanyId = companyId
     };
 
     dbContext.Users.Add(user);
@@ -344,7 +373,11 @@ users.MapPut("/{id:int}", async (
 
 var categories = app.MapGroup("/api/categories").RequireAuthorization();
 
-categories.MapPost("/", async (CreateCategoryRequest request, AppDbContext dbContext, CancellationToken cancellationToken) =>
+categories.MapPost("/", async (
+    CreateCategoryRequest request,
+    AppDbContext dbContext,
+    HttpContext httpContext,
+    CancellationToken cancellationToken) =>
 {
     var exists = await dbContext.Categories.AnyAsync(x => x.Name == request.Name, cancellationToken);
     if (exists)
@@ -352,7 +385,17 @@ categories.MapPost("/", async (CreateCategoryRequest request, AppDbContext dbCon
         return Results.BadRequest(new { message = "Categoria ja cadastrada." });
     }
 
-    var category = new Category { Name = request.Name };
+    var currentUser = await GetCurrentUserAsync(dbContext, httpContext, cancellationToken);
+    if (currentUser is null)
+    {
+        return Results.BadRequest(new { message = "Usuario nao encontrado." });
+    }
+
+    var category = new Category
+    {
+        Name = request.Name,
+        CompanyId = currentUser.CompanyId
+    };
     dbContext.Categories.Add(category);
     await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -371,12 +414,23 @@ categories.MapGet("/", async (AppDbContext dbContext, CancellationToken cancella
 
 var suppliers = app.MapGroup("/api/suppliers").RequireAuthorization();
 
-suppliers.MapPost("/", async (CreateSupplierRequest request, AppDbContext dbContext, CancellationToken cancellationToken) =>
+suppliers.MapPost("/", async (
+    CreateSupplierRequest request,
+    AppDbContext dbContext,
+    HttpContext httpContext,
+    CancellationToken cancellationToken) =>
 {
+    var currentUser = await GetCurrentUserAsync(dbContext, httpContext, cancellationToken);
+    if (currentUser is null)
+    {
+        return Results.BadRequest(new { message = "Usuario nao encontrado." });
+    }
+
     var supplier = new Supplier
     {
         Name = request.Name,
-        Contact = request.Contact
+        Contact = request.Contact,
+        CompanyId = currentUser.CompanyId
     };
 
     dbContext.Suppliers.Add(supplier);
@@ -397,8 +451,18 @@ suppliers.MapGet("/", async (AppDbContext dbContext, CancellationToken cancellat
 
 var products = app.MapGroup("/api/products").RequireAuthorization();
 
-products.MapPost("/", async (CreateProductRequest request, AppDbContext dbContext, CancellationToken cancellationToken) =>
+products.MapPost("/", async (
+    CreateProductRequest request,
+    AppDbContext dbContext,
+    HttpContext httpContext,
+    CancellationToken cancellationToken) =>
 {
+    var currentUser = await GetCurrentUserAsync(dbContext, httpContext, cancellationToken);
+    if (currentUser is null)
+    {
+        return Results.BadRequest(new { message = "Usuario nao encontrado." });
+    }
+
     var categoryExists = await dbContext.Categories.AnyAsync(x => x.Id == request.CategoryId, cancellationToken);
     var supplierExists = await dbContext.Suppliers.AnyAsync(x => x.Id == request.SupplierId, cancellationToken);
 
@@ -415,6 +479,7 @@ products.MapPost("/", async (CreateProductRequest request, AppDbContext dbContex
     var product = new Product
     {
         Name = request.Name,
+        CompanyId = currentUser.CompanyId,
         CategoryId = request.CategoryId,
         SupplierId = request.SupplierId,
         Price = request.Price,
@@ -873,5 +938,34 @@ static MovementResponse ToMovementResponse(StockMovement movement) =>
         movement.UserId,
         movement.User?.Name ?? string.Empty,
         movement.User?.Role);
+
+static async Task<User?> GetCurrentUserAsync(
+    AppDbContext dbContext,
+    HttpContext httpContext,
+    CancellationToken cancellationToken)
+{
+    var userIdValue = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (int.TryParse(userIdValue, out var userId))
+    {
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+
+        if (user is not null)
+        {
+            return user;
+        }
+    }
+
+    var email = httpContext.User.FindFirstValue(ClaimTypes.Email)
+        ?? httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Email);
+
+    if (string.IsNullOrWhiteSpace(email))
+    {
+        return null;
+    }
+
+    return await dbContext.Users
+        .FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
+}
 
 public partial class Program;

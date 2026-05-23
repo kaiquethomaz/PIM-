@@ -14,7 +14,7 @@
 
 <div class="sidebar">
 
-  <h2 id="nomeComercio">NexaFlow</h2>
+  <h2 id="nomeComercio">StockControl</h2>
 
   <ul class="menu-topo">
 
@@ -62,6 +62,11 @@
         <h1>Relatórios</h1>
         <p class="page-subtitle">Resumo de vendas e formas de pagamento.</p>
       </div>
+      <div class="page-actions">
+        <button class="btn-principal relatorio-pdf-btn" type="button" onclick="gerarRelatorioPdf()">
+          Gerar PDF para o dono
+        </button>
+      </div>
     </div>
 
     <div class="kpi-grid">
@@ -90,7 +95,7 @@
       </div>
     </div>
 
-    <div class="cabecalho-tabela">
+    <div class="cabecalho-tabela cabecalho-relatorios">
       <span>ID</span>
       <span>Produto</span>
       <span>Data</span>

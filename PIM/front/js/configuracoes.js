@@ -94,7 +94,7 @@ function carregarEmpresaLocal() {
 
   if (!dados) {
     empresa = {
-      empresa: localStorage.getItem("nomeComercio") || "NexaFlow",
+      empresa: localStorage.getItem("nomeComercio") || "StockControl",
       email: ""
     };
     return;
@@ -104,7 +104,7 @@ function carregarEmpresaLocal() {
     empresa = JSON.parse(dados);
   } catch {
     empresa = {
-      empresa: localStorage.getItem("nomeComercio") || "NexaFlow",
+      empresa: localStorage.getItem("nomeComercio") || "StockControl",
       email: ""
     };
   }

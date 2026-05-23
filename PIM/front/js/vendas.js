@@ -95,9 +95,10 @@ function mapearVendas(movimentosLista) {
     .map(mov => {
       const produto = produtosMap.get(mov.productId);
       const total = produto ? Number(produto.price) * Number(mov.quantity) : 0;
+      const codigo = produto?.id ?? mov.productId ?? "-";
 
       return {
-        id: mov.id,
+        codigo,
         produto: mov.product || produto?.name || "-",
         data: new Date(mov.dateUtc).toLocaleDateString("pt-BR"),
         responsavel: formatarResponsavel(mov.user, mov.userRole),
@@ -125,13 +126,13 @@ function renderizarVendas(lista) {
   lista.forEach((venda, index) => {
     tabela.innerHTML += `
       <tr>
-        <td>#${index + 1}</td>
+        <td class="nowrap">#${venda.codigo}</td>
         <td>${venda.produto}</td>
         <td>${venda.data}</td>
         <td>${venda.responsavel}</td>
         <td>${formatarMoeda(venda.total)}</td>
         <td>${venda.pagamento}</td>
-        <td>${venda.quantidade}</td>
+        <td class="nowrap">${venda.quantidade}</td>
       </tr>
     `;
   });
