@@ -4,6 +4,7 @@ const meses = [
 ];
 
 let movimentos = [];
+let produtos = [];
 let graficoEntradaSaida = null;
 let graficoMaisVendidos = null;
 let graficoDemanda = null;
@@ -42,6 +43,22 @@ async function carregarMovimentos() {
 
   if (!resposta.ok) {
     throw new Error("Falha ao carregar movimentações.");
+  }
+
+  return await resposta.json();
+}
+
+async function carregarProdutos() {
+  const resposta = await apiFetch("/api/products");
+
+  if (resposta.status === 401 || resposta.status === 403) {
+    limparSessao();
+    window.location.href = "login.html";
+    return [];
+  }
+
+  if (!resposta.ok) {
+    throw new Error("Falha ao carregar produtos.");
   }
 
   return await resposta.json();
@@ -426,6 +443,8 @@ function filtrarMovimentosPorPeriodo(periodo, keys) {
 }
 
 function atualizarResumoDashboard(movimentosLista) {
+  const produtosMap = new Map(produtos.map(produto => [produto.id, produto]));
+
   const entradas = movimentosLista.reduce((total, mov) => {
     if (isEntrada(mov.type)) {
       return total + Number(mov.quantity || 0);
@@ -440,7 +459,14 @@ function atualizarResumoDashboard(movimentosLista) {
     return total;
   }, 0);
 
-  const saldo = entradas - saidas;
+  const saldoMovimentado = movimentosLista.reduce((total, mov) => {
+    const produto = produtosMap.get(mov.productId);
+    const preco = Number(produto?.price || 0);
+    const valorMovimento = preco * Number(mov.quantity || 0);
+
+    return total + valorMovimento;
+  }, 0);
+
   const vendidosPorProduto = new Map();
 
   movimentosLista.forEach(mov => {
@@ -470,7 +496,7 @@ function atualizarResumoDashboard(movimentosLista) {
   }
 
   if (saldoEl) {
-    saldoEl.innerText = saldo.toLocaleString("pt-BR");
+    saldoEl.innerText = formatadorMoeda.format(saldoMovimentado);
   }
 
   if (topEl) {
@@ -575,12 +601,14 @@ async function iniciarDashboard() {
   }
 
   try {
-    const [movimentosApi, maisVendidosApi] = await Promise.all([
+    const [movimentosApi, maisVendidosApi, produtosApi] = await Promise.all([
       carregarMovimentos(),
-      carregarMaisVendidos()
+      carregarMaisVendidos(),
+      carregarProdutos()
     ]);
 
     movimentos = movimentosApi || [];
+    produtos = produtosApi || [];
     const maisVendidos = maisVendidosApi || [];
 
     atualizarGraficoMaisVendidos(maisVendidos);

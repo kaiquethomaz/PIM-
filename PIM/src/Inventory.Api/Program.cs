@@ -489,6 +489,20 @@ products.MapPost("/", async (
     dbContext.Products.Add(product);
     await dbContext.SaveChangesAsync(cancellationToken);
 
+    if (product.Quantity > 0)
+    {
+        dbContext.StockMovements.Add(new StockMovement
+        {
+            ProductId = product.Id,
+            UserId = currentUser.Id,
+            Type = MovementType.Entry,
+            Quantity = product.Quantity,
+            DateUtc = DateTime.UtcNow
+        });
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     var created = await dbContext.Products
         .Include(x => x.Category)
         .Include(x => x.Supplier)
