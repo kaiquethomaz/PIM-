@@ -17,11 +17,13 @@ const formatadorMoeda = new Intl.NumberFormat("pt-BR", {
 });
 
 function isEntrada(tipo) {
-  return tipo === 1 || tipo === "Entry" || tipo === "entrada";
+  const valor = String(tipo ?? "").toLowerCase();
+  return tipo === 1 || valor === "1" || valor === "entry" || valor === "entrada";
 }
 
 function isSaida(tipo) {
-  return tipo === 2 || tipo === "Exit" || tipo === "saida";
+  const valor = String(tipo ?? "").toLowerCase();
+  return tipo === 2 || valor === "2" || valor === "exit" || valor === "saida";
 }
 
 function limparSessao() {
@@ -306,14 +308,10 @@ function obterPeriodo() {
 }
 
 function inicioSemanaUtc(data) {
-  const copia = new Date(Date.UTC(
-    data.getUTCFullYear(),
-    data.getUTCMonth(),
-    data.getUTCDate()
-  ));
-  const diaSemana = copia.getUTCDay();
+  const copia = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+  const diaSemana = copia.getDay();
   const deslocamento = diaSemana === 0 ? -6 : 1 - diaSemana;
-  copia.setUTCDate(copia.getUTCDate() + deslocamento);
+  copia.setDate(copia.getDate() + deslocamento);
   return copia;
 }
 
@@ -323,21 +321,28 @@ function formatarLabelDia(data) {
 
 function formatarLabelSemana(data) {
   const fimSemana = new Date(data);
-  fimSemana.setUTCDate(fimSemana.getUTCDate() + 6);
+  fimSemana.setDate(fimSemana.getDate() + 6);
   return `${formatarLabelDia(data)}-${formatarLabelDia(fimSemana)}`;
 }
 
+function formatarChaveLocal(data) {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const dia = String(data.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
 function obterBucketMovimento(data, periodo) {
-  const ano = data.getUTCFullYear();
-  const mes = data.getUTCMonth();
+  const ano = data.getFullYear();
+  const mes = data.getMonth();
 
   if (periodo === "diario") {
-    return `${ano}-${mes + 1}-${data.getUTCDate()}`;
+    return `${ano}-${mes + 1}-${data.getDate()}`;
   }
 
   if (periodo === "semanal") {
     const inicioSemana = inicioSemanaUtc(data);
-    return `W-${inicioSemana.toISOString().slice(0, 10)}`;
+    return `W-${formatarChaveLocal(inicioSemana)}`;
   }
 
   if (periodo === "trimestral") {
@@ -360,11 +365,7 @@ function montarBuckets(periodo) {
     const keys = [];
 
     for (let i = 13; i >= 0; i -= 1) {
-      const data = new Date(Date.UTC(
-        agora.getUTCFullYear(),
-        agora.getUTCMonth(),
-        agora.getUTCDate() - i
-      ));
+      const data = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() - i);
       labels.push(formatarLabelDia(data));
       keys.push(obterBucketMovimento(data, periodo));
     }
@@ -407,7 +408,7 @@ function montarBuckets(periodo) {
   if (periodo === "anual") {
     const labels = [];
     const keys = [];
-    const anoAtual = agora.getUTCFullYear();
+    const anoAtual = agora.getFullYear();
 
     for (let i = 4; i >= 0; i -= 1) {
       const ano = anoAtual - i;
@@ -420,13 +421,13 @@ function montarBuckets(periodo) {
 
   const labels = [];
   const keys = [];
-  const anoAtual = agora.getUTCFullYear();
-  const mesAtual = agora.getUTCMonth();
+  const anoAtual = agora.getFullYear();
+  const mesAtual = agora.getMonth();
 
   for (let i = 11; i >= 0; i -= 1) {
-    const data = new Date(Date.UTC(anoAtual, mesAtual - i, 1));
-    const ano = data.getUTCFullYear();
-    const mes = data.getUTCMonth();
+    const data = new Date(anoAtual, mesAtual - i, 1);
+    const ano = data.getFullYear();
+    const mes = data.getMonth();
     labels.push(`${meses[mes]}/${String(ano).slice(-2)}`);
     keys.push(`${ano}-${mes + 1}`);
   }
