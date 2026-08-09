@@ -11,6 +11,15 @@ function definirTexto(id, valor) {
   }
 }
 
+function definirStatusApi(texto, conectado) {
+  const alvo = obterElemento("resumoStatusApi");
+  if (!alvo) {
+    return;
+  }
+  const classeDot = conectado ? "status-dot-online" : "status-dot-offline";
+  alvo.innerHTML = `<span class="status-dot ${classeDot}"></span>${texto}`;
+}
+
 function definirMensagem(texto, tipo = "erro") {
   const mensagem = obterElemento("mensagemConfiguracoes");
   if (!mensagem) {
@@ -131,11 +140,22 @@ function preencherResumoSessao() {
   definirTexto("resumoPerfil", perfilFormatado);
 }
 
+async function contarRegistros(endpoint) {
+  try {
+    const resposta = await apiFetch(endpoint);
+    if (!resposta.ok) {
+      return null;
+    }
+    const dados = await resposta.json();
+    return Array.isArray(dados) ? dados.length : null;
+  } catch {
+    return null;
+  }
+}
+
 async function carregarResumoOperacional() {
   try {
-    const requisicoes = [apiFetch("/api/users")];
-
-    const [usuariosResponse] = await Promise.all(requisicoes);
+    const usuariosResponse = await apiFetch("/api/users");
 
     if (usuariosResponse.status === 401 || usuariosResponse.status === 403) {
       logout();
@@ -148,10 +168,22 @@ async function carregarResumoOperacional() {
     }
 
     definirTexto("resumoUsuariosConfig", String(usuarios.length));
+    definirTexto("contadorUsuariosAcesso", String(usuarios.length));
     renderizarUsuariosComAcesso(usuarios);
-    definirTexto("resumoStatusApi", "API conectada");
+    definirStatusApi("API conectada", true);
+
+    // Indicadores operacionais do catalogo.
+    const [produtos, categorias, fornecedores] = await Promise.all([
+      contarRegistros("/api/products"),
+      contarRegistros("/api/categories"),
+      contarRegistros("/api/suppliers")
+    ]);
+
+    definirTexto("resumoProdutosConfig", produtos === null ? "-" : String(produtos));
+    definirTexto("resumoCategoriasConfig", categorias === null ? "-" : String(categorias));
+    definirTexto("resumoFornecedoresConfig", fornecedores === null ? "-" : String(fornecedores));
   } catch {
-    definirTexto("resumoStatusApi", "Conexao instavel");
+    definirStatusApi("Conexão instável", false);
     definirMensagem("Nao foi possivel atualizar os indicadores do ambiente.");
     definirTexto("resumoUsuariosConfig", "-");
     renderizarUsuariosComAcesso([]);

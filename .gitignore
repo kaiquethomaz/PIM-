@@ -1,6 +1,18 @@
+# Build
 **/bin/
 **/obj/
 **/.vs/
+*.user
+
+# Banco de dados local (modo demo SQLite)
 *.db
 *.db-shm
 *.db-wal
+
+# IDEs / editores
+.idea/
+.vscode/
+
+# Sistema
+.DS_Store
+Thumbs.db

@@ -1,0 +1,10 @@
+# Normaliza quebras de linha automaticamente
+* text=auto
+
+# Scripts que devem manter CRLF no Windows
+*.bat text eol=crlf
+
+# Arquivos binários (não normalizar)
+*.png binary
+*.jpg binary
+*.gif binary

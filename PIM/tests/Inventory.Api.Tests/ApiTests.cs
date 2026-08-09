@@ -6,8 +6,17 @@ using Inventory.Api.Enums;
 
 namespace Inventory.Api.Tests;
 
-public class ApiTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
+public class ApiTests : IClassFixture<CustomWebApplicationFactory>
 {
+    private readonly CustomWebApplicationFactory factory;
+
+    public ApiTests(CustomWebApplicationFactory factory)
+    {
+        this.factory = factory;
+        // Garante um banco limpo e repovoado antes de cada teste.
+        factory.ResetState();
+    }
+
     [Fact]
     public async Task Login_ReturnsJwtToken()
     {
@@ -112,10 +121,23 @@ public class ApiTests(CustomWebApplicationFactory factory) : IClassFixture<Custo
     }
 
     [Fact]
-    public async Task Manager_Cannot_Create_Product()
+    public async Task Manager_Can_Create_Product()
     {
+        // A politica "CatalogManager" concede a gestao de catalogo a Admin e Manager.
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await LoginAsync(client, "manager@test.com", "Manager@123"));
+
+        var response = await client.PostAsJsonAsync("/api/products", new CreateProductRequest("Headset", 1, 1, 300m, 4));
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Employee_Cannot_Create_Product()
+    {
+        // Funcionario nao tem permissao de gestao de catalogo.
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await LoginAsync(client, "employee@test.com", "Employee@123"));
 
         var response = await client.PostAsJsonAsync("/api/products", new CreateProductRequest("Headset", 1, 1, 300m, 4));
 

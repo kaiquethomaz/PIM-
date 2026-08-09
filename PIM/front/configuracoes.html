@@ -70,9 +70,9 @@
 
       <div class="config-hero-status">
         <div class="config-status-badge">
-          <span class="material-icons">verified</span>
+          <span class="material-icons">wifi</span>
           <div>
-            <strong id="resumoStatusApi">Sincronizando...</strong>
+            <strong id="resumoStatusApi"><span class="status-dot status-dot-pending" id="statusDotApi"></span>Sincronizando...</strong>
             <span>Conectividade com a API</span>
           </div>
         </div>
@@ -93,6 +93,30 @@
         <div>
           <span class="config-summary-label">Usuários com acesso</span>
           <strong class="config-summary-value" id="resumoUsuariosConfig">0</strong>
+        </div>
+      </article>
+
+      <article class="config-summary-card">
+        <span class="material-icons config-summary-icon">inventory_2</span>
+        <div>
+          <span class="config-summary-label">Produtos cadastrados</span>
+          <strong class="config-summary-value" id="resumoProdutosConfig">0</strong>
+        </div>
+      </article>
+
+      <article class="config-summary-card">
+        <span class="material-icons config-summary-icon">category</span>
+        <div>
+          <span class="config-summary-label">Categorias</span>
+          <strong class="config-summary-value" id="resumoCategoriasConfig">0</strong>
+        </div>
+      </article>
+
+      <article class="config-summary-card">
+        <span class="material-icons config-summary-icon">local_shipping</span>
+        <div>
+          <span class="config-summary-label">Fornecedores</span>
+          <strong class="config-summary-value" id="resumoFornecedoresConfig">0</strong>
         </div>
       </article>
     </section>
@@ -147,32 +171,37 @@
         </button>
       </section>
 
-      <section class="config-card">
+      <section class="config-card config-card-danger">
         <div class="config-card-header">
           <div class="config-card-icon config-card-icon-warning">
-            <span class="material-icons">build</span>
+            <span class="material-icons">warning</span>
           </div>
           <div>
-            <h3>Manutenção local</h3>
-            <p class="config-card-subtitle">Ações de limpeza de dados salvos no navegador.</p>
+            <h3>Zona de risco</h3>
+            <p class="config-card-subtitle">Ações irreversíveis sobre os dados da operação. Use com cautela.</p>
           </div>
+        </div>
+
+        <div class="config-danger-banner">
+          <span class="material-icons">info</span>
+          <span>Estas ações apagam dados diretamente no servidor e não podem ser desfeitas.</span>
         </div>
 
         <div class="config-action-list">
           <div class="config-action-item">
             <div>
-              <strong>Limpar cache de vendas local</strong>
-              <p>Remove registros antigos salvos localmente por versões anteriores da interface.</p>
+              <strong>Apagar todas as vendas</strong>
+              <p>Remove todas as movimentações de saída e devolve as quantidades vendidas ao estoque.</p>
             </div>
-            <button onclick="limparVendas()" class="config-btn-secondary">Limpar vendas</button>
+            <button onclick="limparVendas()" class="config-btn-danger">Apagar vendas</button>
           </div>
 
           <div class="config-action-item">
             <div>
-              <strong>Limpar cache de estoque local</strong>
-              <p>Remove dados locais legados de produtos sem impactar os dados oficiais da API.</p>
+              <strong>Zerar o estoque</strong>
+              <p>Remove todos os produtos e movimentações cadastrados. O catálogo ficará vazio.</p>
             </div>
-            <button onclick="limparEstoque()" class="config-btn-secondary">Limpar estoque</button>
+            <button onclick="limparEstoque()" class="config-btn-danger">Zerar estoque</button>
           </div>
         </div>
       </section>
@@ -201,7 +230,7 @@
         <div class="config-access-list">
           <div class="config-access-header">
             <strong>E-mails com acesso</strong>
-            <span id="resumoUsuariosConfig">0</span>
+            <span id="contadorUsuariosAcesso">0</span>
           </div>
 
           <div id="listaUsuariosConfig" class="config-access-items">

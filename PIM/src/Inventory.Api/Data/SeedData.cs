@@ -13,7 +13,6 @@ public static class SeedData
         await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
-        var stockService = scope.ServiceProvider.GetRequiredService<IStockService>();
 
         await db.Database.EnsureCreatedAsync();
 
@@ -90,86 +89,105 @@ public static class SeedData
             var fornecedorAlfa = fornecedores.First();
             var fornecedorBeta = fornecedores.Last();
 
-            db.Products.AddRange(
-                new Product
-                {
-                    Name = "Café",
-                    CompanyId = company.Id,
-                    CategoryId = categoriaAlimentos.Id,
-                    SupplierId = fornecedorAlfa.Id,
-                    Price = 18.00m,
-                    Quantity = 20
-                },
-                new Product
-                {
-                    Name = "Arroz",
-                    CompanyId = company.Id,
-                    CategoryId = categoriaAlimentos.Id,
-                    SupplierId = fornecedorBeta.Id,
-                    Price = 28.00m,
-                    Quantity = 15
-                },
-                new Product
-                {
-                    Name = "Detergente",
-                    CompanyId = company.Id,
-                    CategoryId = categoriaLimpeza.Id,
-                    SupplierId = fornecedorAlfa.Id,
-                    Price = 3.50m,
-                    Quantity = 12
-                }
-            );
-
-            await db.SaveChangesAsync();
-        }
-
-        if (!await db.StockMovements.AnyAsync())
-        {
-            var produtos = await db.Products
-                .OrderBy(x => x.Id)
-                .ToListAsync();
-
-            if (produtos.Count > 0)
+            // Catalogo de demonstracao: (nome, categoria, fornecedor, preco, peso de venda, estoque final)
+            var catalogo = new[]
             {
-                var agora = DateTime.UtcNow;
+                (Nome: "Arroz",       Categoria: categoriaAlimentos, Fornecedor: fornecedorBeta, Preco: 28.00m, Peso: 3.0, EstoqueFinal: 24),
+                (Nome: "Café",        Categoria: categoriaAlimentos, Fornecedor: fornecedorAlfa, Preco: 18.00m, Peso: 2.2, EstoqueFinal: 18),
+                (Nome: "Feijão",      Categoria: categoriaAlimentos, Fornecedor: fornecedorBeta, Preco: 9.50m,  Peso: 2.6, EstoqueFinal: 30),
+                (Nome: "Açúcar",      Categoria: categoriaAlimentos, Fornecedor: fornecedorAlfa, Preco: 4.20m,  Peso: 1.8, EstoqueFinal: 12),
+                (Nome: "Detergente",  Categoria: categoriaLimpeza,   Fornecedor: fornecedorAlfa, Preco: 3.50m,  Peso: 1.2, EstoqueFinal: 3),
+                (Nome: "Sabão em pó", Categoria: categoriaLimpeza,   Fornecedor: fornecedorBeta, Preco: 12.90m, Peso: 0.9, EstoqueFinal: 8),
+            };
 
-                var movimento1 = await stockService.RegisterMovementAsync(
-                    new CreateMovementRequest(produtos[0].Id, MovementType.Entry, 10),
-                    adminUser.Id,
-                    CancellationToken.None);
+            // Random com semente fixa: os dados de demo ficam iguais a cada execucao.
+            var random = new Random(20240501);
+            var hoje = DateTime.UtcNow.Date;
+            var movimentos = new List<StockMovement>();
 
-                movimento1.DateUtc = agora.AddMonths(-2);
-
-                var movimento2 = await stockService.RegisterMovementAsync(
-                    new CreateMovementRequest(produtos[0].Id, MovementType.Exit, 4),
-                    adminUser.Id,
-                    CancellationToken.None);
-
-                movimento2.DateUtc = agora.AddMonths(-1);
-
-                var movimento3 = await stockService.RegisterMovementAsync(
-                    new CreateMovementRequest(produtos[1].Id, MovementType.Exit, 6),
-                    adminUser.Id,
-                    CancellationToken.None);
-
-                movimento3.DateUtc = agora.AddDays(-10);
-
-                var movimento4 = await stockService.RegisterMovementAsync(
-                    new CreateMovementRequest(produtos[2].Id, MovementType.Entry, 8),
-                    adminUser.Id,
-                    CancellationToken.None);
-
-                movimento4.DateUtc = agora.AddDays(-5);
-
-                var movimento5 = await stockService.RegisterMovementAsync(
-                    new CreateMovementRequest(produtos[2].Id, MovementType.Exit, 3),
-                    adminUser.Id,
-                    CancellationToken.None);
-
-                movimento5.DateUtc = agora.AddDays(-2);
-
+            foreach (var item in catalogo)
+            {
+                var produto = new Product
+                {
+                    Name = item.Nome,
+                    CompanyId = company.Id,
+                    CategoryId = item.Categoria.Id,
+                    SupplierId = item.Fornecedor.Id,
+                    Price = item.Preco,
+                    Quantity = 0
+                };
+                db.Products.Add(produto);
                 await db.SaveChangesAsync();
+
+                // Vendas (saidas) diarias dos ultimos 45 dias, com tendencia leve de alta,
+                // ruido aleatorio e reforco nos fins de semana -> serie realista para o ML.
+                var saidas = new List<(DateTime Data, int Qtd)>();
+                for (var d = 45; d >= 0; d--)
+                {
+                    var data = hoje.AddDays(-d);
+                    var fimDeSemana = data.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ? 1.5 : 1.0;
+                    var tendencia = 0.7 + (0.6 * (45 - d) / 45.0);
+                    var ruido = random.NextDouble() - 0.4;
+                    var qtd = (int)Math.Round(Math.Max(0, item.Peso * fimDeSemana * tendencia + ruido));
+                    if (qtd > 0)
+                    {
+                        saidas.Add((data, qtd));
+                    }
+                }
+
+                var totalSaidas = saidas.Sum(x => x.Qtd);
+
+                // Reposicoes (entradas) ao longo do periodo.
+                var reposicoes = new[]
+                {
+                    (Data: hoje.AddDays(-30), Qtd: (int)Math.Round(item.Peso * 10)),
+                    (Data: hoje.AddDays(-16), Qtd: (int)Math.Round(item.Peso * 10)),
+                    (Data: hoje.AddDays(-6),  Qtd: (int)Math.Round(item.Peso * 10)),
+                };
+                var totalReposicoes = reposicoes.Sum(x => x.Qtd);
+
+                // Entrada inicial dimensionada para fechar no estoque final desejado.
+                var entradaInicial = Math.Max(1, totalSaidas + item.EstoqueFinal - totalReposicoes);
+
+                movimentos.Add(new StockMovement
+                {
+                    ProductId = produto.Id,
+                    UserId = adminUser.Id,
+                    Type = MovementType.Entry,
+                    Quantity = entradaInicial,
+                    DateUtc = hoje.AddDays(-50)
+                });
+
+                foreach (var rep in reposicoes)
+                {
+                    movimentos.Add(new StockMovement
+                    {
+                        ProductId = produto.Id,
+                        UserId = adminUser.Id,
+                        Type = MovementType.Entry,
+                        Quantity = rep.Qtd,
+                        DateUtc = rep.Data
+                    });
+                }
+
+                foreach (var saida in saidas)
+                {
+                    movimentos.Add(new StockMovement
+                    {
+                        ProductId = produto.Id,
+                        UserId = adminUser.Id,
+                        Type = MovementType.Exit,
+                        Quantity = saida.Qtd,
+                        DateUtc = saida.Data
+                    });
+                }
+
+                // Fecha o estoque no valor desejado (coerente com o historico gerado).
+                produto.Quantity = entradaInicial + totalReposicoes - totalSaidas;
             }
+
+            db.StockMovements.AddRange(movimentos);
+            await db.SaveChangesAsync();
         }
     }
 }

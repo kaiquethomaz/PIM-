@@ -26,6 +26,18 @@ public static class TestDataSeeder
             .Select(x => x.Id)
             .First();
 
+        if (!db.Users.Any(x => x.Email == "admin@test.com"))
+        {
+            db.Users.Add(new User
+            {
+                Name = "Admin",
+                Email = "admin@test.com",
+                PasswordHash = hasher.Hash("Admin@123"),
+                Role = UserRole.Admin,
+                CompanyId = companyId
+            });
+        }
+
         if (!db.Users.Any(x => x.Email == "manager@test.com"))
         {
             db.Users.Add(new User

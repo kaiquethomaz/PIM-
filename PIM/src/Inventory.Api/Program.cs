@@ -17,14 +17,30 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 
+// Provider de banco configuravel: "Sqlite" (padrao, roda sem instalar nada)
+// ou "MySql" (producao). Basta ajustar Database:Provider no appsettings ou via
+// variavel de ambiente Database__Provider.
+var databaseProvider = builder.Configuration["Database:Provider"] ?? "Sqlite";
+var isSqlite = databaseProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase);
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-    options.UseMySql(
-        connectionString,
-        ServerVersion.AutoDetect(connectionString)
-    );
+    if (isSqlite)
+    {
+        options.UseSqlite(
+            string.IsNullOrWhiteSpace(connectionString)
+                ? "Data Source=inventory.db"
+                : connectionString);
+    }
+    else
+    {
+        options.UseMySql(
+            connectionString,
+            ServerVersion.AutoDetect(connectionString)
+        );
+    }
 });
 
 builder.Services.AddCors(options =>
@@ -110,15 +126,14 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 var app = builder.Build();
-using (var scope = app.Services.CreateScope())
+
+// Em modo demo (Sqlite) o banco e criado e populado automaticamente,
+// permitindo rodar o projeto com um unico comando, sem MySQL.
+// Nao roda em ambiente de teste, que gerencia o proprio banco/seed.
+if (isSqlite && !app.Environment.IsEnvironment("Testing"))
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-    Console.WriteLine(db.Database.GetConnectionString());
+    await SeedData.InitializeAsync(app.Services, app.Configuration);
 }
-
-// DESABILITADO PARA USAR MYSQL REAL
-// await SeedData.InitializeAsync(app.Services, app.Configuration);
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -147,19 +162,13 @@ auth.MapPost("/login", async (
 
     if (user is null)
     {
-        Console.WriteLine("Usuario nao encontrado");
         return Results.Unauthorized();
     }
-
-    Console.WriteLine("Senha digitada: " + request.Password);
-    Console.WriteLine("Hash banco: " + user.PasswordHash);
 
     var senhaValida = passwordHasher.Verify(
         request.Password,
         user.PasswordHash
     );
-
-    Console.WriteLine("Senha valida? " + senhaValida);
 
     if (!senhaValida)
     {

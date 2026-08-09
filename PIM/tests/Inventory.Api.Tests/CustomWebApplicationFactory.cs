@@ -40,15 +40,23 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             _connection.Open();
 
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection));
-
-            var provider = services.BuildServiceProvider();
-            using var scope = provider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Database.EnsureCreated();
-
-            var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
-            TestDataSeeder.Seed(db, hasher);
         });
+    }
+
+    /// <summary>
+    /// Recria o esquema e repovoa os dados de teste. Chamado antes de cada teste
+    /// para garantir isolamento total, mesmo com o banco in-memory compartilhado.
+    /// </summary>
+    public void ResetState()
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+
+        db.Database.EnsureDeleted();
+        db.Database.EnsureCreated();
+
+        TestDataSeeder.Seed(db, hasher);
     }
 
     protected override void Dispose(bool disposing)
