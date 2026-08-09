@@ -960,7 +960,8 @@ static MovementResponse ToMovementResponse(StockMovement movement) =>
         movement.DateUtc,
         movement.UserId,
         movement.User?.Name ?? string.Empty,
-        movement.User?.Role);
+        movement.User?.Role,
+        movement.PaymentMethod);
 
 static async Task<User?> GetCurrentUserAsync(
     AppDbContext dbContext,

@@ -12,4 +12,7 @@ public class StockMovement
     public DateTime DateUtc { get; set; }
     public int UserId { get; set; }
     public User? User { get; set; }
+
+    // Forma de pagamento — preenchida apenas em saidas (vendas). Ex.: PIX, Cartao, Dinheiro.
+    public string? PaymentMethod { get; set; }
 }

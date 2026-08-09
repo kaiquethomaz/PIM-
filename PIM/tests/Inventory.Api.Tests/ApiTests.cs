@@ -173,6 +173,20 @@ public class ApiTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Sale_Persists_Payment_Method()
+    {
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", await LoginAsync(client, "employee@test.com", "Employee@123"));
+
+        var response = await client.PostAsJsonAsync("/api/movements", new CreateMovementRequest(1, MovementType.Exit, 1, "PIX"));
+        response.EnsureSuccessStatusCode();
+
+        var movements = await client.GetFromJsonAsync<List<MovementResponse>>("/api/movements");
+        Assert.NotNull(movements);
+        Assert.Contains(movements!, m => m.Type == MovementType.Exit && m.PaymentMethod == "PIX");
+    }
+
+    [Fact]
     public async Task Demand_Forecast_Returns_Data_With_Short_History()
     {
         var client = factory.CreateClient();

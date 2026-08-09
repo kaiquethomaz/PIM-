@@ -54,6 +54,23 @@ function mapRoleToPerfil(role) {
   return "";
 }
 
+function badgePagamento(forma) {
+  const valor = (forma || "").toString().trim();
+  const classes = {
+    "PIX": "pagamento-pix",
+    "Cartão": "pagamento-cartao",
+    "Cartao": "pagamento-cartao",
+    "Dinheiro": "pagamento-dinheiro"
+  };
+
+  const classe = classes[valor];
+  if (!classe) {
+    return `<span class="pagamento-badge pagamento-vazio">—</span>`;
+  }
+
+  return `<span class="pagamento-badge ${classe}">${valor}</span>`;
+}
+
 function mapPerfilToRoleValue(perfil) {
   if (perfil === "admin") {
     return 1;

@@ -170,6 +170,9 @@ public static class SeedData
                     });
                 }
 
+                // Distribuicao realista de formas de pagamento (PIX predominante).
+                var formasPagamento = new[] { "PIX", "PIX", "PIX", "Cartão", "Cartão", "Dinheiro" };
+
                 foreach (var saida in saidas)
                 {
                     movimentos.Add(new StockMovement
@@ -178,7 +181,8 @@ public static class SeedData
                         UserId = adminUser.Id,
                         Type = MovementType.Exit,
                         Quantity = saida.Qtd,
-                        DateUtc = saida.Data
+                        DateUtc = saida.Data,
+                        PaymentMethod = formasPagamento[random.Next(formasPagamento.Length)]
                     });
                 }
 

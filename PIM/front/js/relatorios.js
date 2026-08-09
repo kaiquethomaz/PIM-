@@ -153,10 +153,23 @@ function mapearVendas() {
         dataUtc: mov.dateUtc,
         responsavel: formatarResponsavel(mov.user, mov.userRole),
         total,
-        pagamento: "—",
+        pagamento: mov.paymentMethod || "—",
         quantidade: mov.quantity
       };
     });
+}
+
+function pagamentoMaisUsado(lista) {
+  const contagem = {};
+  lista.forEach(venda => {
+    const forma = venda.pagamento && venda.pagamento !== "—" ? venda.pagamento : null;
+    if (forma) {
+      contagem[forma] = (contagem[forma] || 0) + 1;
+    }
+  });
+
+  const ordenado = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+  return ordenado.length ? ordenado[0][0] : "—";
 }
 
 function carregarRelatorios(vendas) {
@@ -164,7 +177,7 @@ function carregarRelatorios(vendas) {
 
   document.getElementById("totalVendido").innerText = formatarMoeda(resumo.totalVendido);
   document.getElementById("qtdVendida").innerText = resumo.qtdVendida.toLocaleString("pt-BR");
-  document.getElementById("pagamentoMaisUsado").innerText = "—";
+  document.getElementById("pagamentoMaisUsado").innerText = pagamentoMaisUsado(vendas);
 
   const tabela = document.getElementById("tabelaRelatorios");
   tabela.innerHTML = "";
@@ -186,7 +199,7 @@ function carregarRelatorios(vendas) {
         <td>${venda.data}</td>
         <td>${venda.responsavel}</td>
         <td>${formatarMoeda(venda.total)}</td>
-        <td>${venda.pagamento}</td>
+        <td>${badgePagamento(venda.pagamento)}</td>
         <td class="nowrap">${venda.quantidade}</td>
       </tr>
     `;
@@ -219,10 +232,11 @@ async function gerarRelatorioPdf() {
         <td>${escapeHtml(venda.data)}</td>
         <td>${escapeHtml(venda.responsavel)}</td>
         <td class="text-right nowrap">${formatarMoeda(Number(venda.total || 0))}</td>
+        <td>${escapeHtml(venda.pagamento || "—")}</td>
         <td class="text-center nowrap">${Number(venda.quantidade || 0)}</td>
       </tr>
     `).join("")
-    : `<tr><td colspan="6">Nenhuma venda registrada.</td></tr>`;
+    : `<tr><td colspan="7">Nenhuma venda registrada.</td></tr>`;
 
   const estoqueRows = produtos.length
     ? produtos.map(produto => {
@@ -424,8 +438,8 @@ async function gerarRelatorioPdf() {
             </div>
             <div class="kpi">
               <div class="kpi-label">Pagamento mais usado</div>
-              <div class="kpi-value">Não informado</div>
-              <div class="kpi-meta">dados indisponíveis</div>
+              <div class="kpi-value">${escapeHtml(pagamentoMaisUsado(vendas))}</div>
+              <div class="kpi-meta">preferência dos clientes</div>
             </div>
             <div class="kpi">
               <div class="kpi-label">Movimentações</div>
@@ -445,6 +459,7 @@ async function gerarRelatorioPdf() {
                 <th>Data</th>
                 <th>Responsável</th>
                 <th class="text-right">Total</th>
+                <th>Pagamento</th>
                 <th class="text-center">Qtd.</th>
               </tr>
             </thead>

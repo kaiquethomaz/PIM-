@@ -103,7 +103,7 @@ function mapearVendas(movimentosLista) {
         data: new Date(mov.dateUtc).toLocaleDateString("pt-BR"),
         responsavel: formatarResponsavel(mov.user, mov.userRole),
         total,
-        pagamento: "—",
+        pagamento: mov.paymentMethod || "—",
         quantidade: mov.quantity
       };
     });
@@ -131,7 +131,7 @@ function renderizarVendas(lista) {
         <td>${venda.data}</td>
         <td>${venda.responsavel}</td>
         <td>${formatarMoeda(venda.total)}</td>
-        <td>${venda.pagamento}</td>
+        <td>${badgePagamento(venda.pagamento)}</td>
         <td class="nowrap">${venda.quantidade}</td>
       </tr>
     `;
@@ -199,7 +199,8 @@ async function registrarVenda() {
     body: JSON.stringify({
       ProductId: produtoId,
       Type: 2,
-      Quantity: quantidade
+      Quantity: quantidade,
+      PaymentMethod: pagamento
     })
   });
 

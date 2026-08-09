@@ -168,6 +168,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasColumnName("usuario_id")
                 .IsRequired();
 
+            entity.Property(x => x.PaymentMethod)
+                .HasColumnName("forma_pagamento")
+                .HasMaxLength(30);
+
             entity.HasOne(x => x.Product)
                 .WithMany(x => x.Movements)
                 .HasForeignKey(x => x.ProductId);

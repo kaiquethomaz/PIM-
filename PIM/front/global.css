@@ -1899,6 +1899,121 @@ canvas {
   box-shadow: 0 8px 18px rgba(220, 38, 38, 0.25);
 }
 
+/* ===== Badges de forma de pagamento (Vendas / Relatórios) ===== */
+.pagamento-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.pagamento-pix {
+  background: rgba(20, 184, 166, 0.14);
+  color: #0f766e;
+}
+
+.pagamento-cartao {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+}
+
+.pagamento-dinheiro {
+  background: rgba(22, 163, 74, 0.14);
+  color: #15803d;
+}
+
+.pagamento-vazio {
+  background: var(--gray-100);
+  color: var(--gray-500);
+}
+
+/* ===== Pill de status de estoque ===== */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.status-pill::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-pill.status-ok {
+  background: rgba(34, 197, 94, 0.14);
+  color: #15803d;
+}
+
+.status-pill.status-medio {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+}
+
+.status-pill.status-baixo {
+  background: rgba(239, 68, 68, 0.14);
+  color: #dc2626;
+}
+
+/* ===== KPI cards com acento colorido ===== */
+.kpi-card {
+  position: relative;
+}
+
+.kpi-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: var(--blue-500);
+}
+
+.kpi-grid .kpi-card:nth-child(1)::before { background: #2563eb; }
+.kpi-grid .kpi-card:nth-child(2)::before { background: #7c3aed; }
+.kpi-grid .kpi-card:nth-child(3)::before { background: #f59e0b; }
+.kpi-grid .kpi-card:nth-child(4)::before { background: #14b8a6; }
+
+.kpi-grid .kpi-card:nth-child(2) .kpi-icon {
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.14);
+}
+
+.kpi-grid .kpi-card:nth-child(3) .kpi-icon {
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.16);
+}
+
+.kpi-grid .kpi-card:nth-child(4) .kpi-icon {
+  color: #0d9488;
+  background: rgba(20, 184, 166, 0.16);
+}
+
+/* ===== Estado vazio das tabelas ===== */
+.tabela-card tr:has(td[colspan]) {
+  display: block;
+}
+
+.tabela-card td[colspan] {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--gray-500);
+  font-size: 14px;
+}
+
 .btn-principal:hover,
 .btn-novo:hover,
 .produto-form button:hover,

@@ -41,7 +41,8 @@ public class StockService(AppDbContext dbContext) : IStockService
             Quantity = request.Quantity,
             Type = request.Type,
             UserId = userId,
-            DateUtc = DateTime.UtcNow
+            DateUtc = DateTime.UtcNow,
+            PaymentMethod = request.Type == MovementType.Exit ? request.PaymentMethod : null
         };
 
         dbContext.StockMovements.Add(movement);

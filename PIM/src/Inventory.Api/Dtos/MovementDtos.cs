@@ -2,7 +2,7 @@ using Inventory.Api.Enums;
 
 namespace Inventory.Api.Dtos;
 
-public record CreateMovementRequest(int ProductId, MovementType Type, int Quantity);
+public record CreateMovementRequest(int ProductId, MovementType Type, int Quantity, string? PaymentMethod = null);
 
 public record MovementResponse(
     int Id,
@@ -13,7 +13,8 @@ public record MovementResponse(
     DateTime DateUtc,
     int UserId,
     string User,
-    UserRole? UserRole);
+    UserRole? UserRole,
+    string? PaymentMethod);
 
 public record StockReportItemResponse(
     int ProductId,

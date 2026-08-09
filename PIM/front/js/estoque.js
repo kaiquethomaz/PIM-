@@ -16,6 +16,12 @@ function statusProduto(qtd) {
   return "ok";
 }
 
+function rotuloStatus(status) {
+  if (status === "baixo") return "Baixo";
+  if (status === "medio") return "Médio";
+  return "Em dia";
+}
+
 function formatarMoeda(valor) {
   return valor.toLocaleString("pt-BR", {
     style: "currency",
@@ -61,7 +67,7 @@ function renderizarEstoque(lista) {
         <td>${produto.category}</td>
         <td>#${produto.id}</td>
         <td>${formatarMoeda(Number(produto.price))}</td>
-        <td><span class="status ${status}"></span></td>
+        <td><span class="status-pill status-${status}">${rotuloStatus(status)} · ${produto.quantity}</span></td>
         <td class="acoes">
           ${perfil !== "funcionario" ? `
             <a class="material-icons acao-link" href="cadastro-produto.html?id=${produto.id}" aria-label="Editar produto">edit</a>
